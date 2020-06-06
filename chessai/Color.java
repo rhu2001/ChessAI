@@ -1,7 +1,7 @@
 package chessai;
 
 /**
- * The chess.Color of a chess.Piece object denotes whether
+ * The Color of a Piece object denotes whether
  * a particular piece belongs to the white (W)
  * or black (B) player.
  *

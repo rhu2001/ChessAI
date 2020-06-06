@@ -2,6 +2,14 @@ package chessai;
 
 import static chessai.Square.*;
 
+/**
+ * A possible move that can be made in chess.
+ * Like Square objects, Moves are immutable
+ * and unique and are generated and retrieved
+ * by static factory methods.
+ *
+ * @author Richard Hu
+ */
 public class Move {
 
     /**
@@ -114,7 +122,7 @@ public class Move {
     private static Move[][][] _moves = new Move[NUM_SQUARES][NUM_SQUARES][7];
 
     /**
-     * Starting and destination Squares.
+     * Starting and destination squares.
      */
     private final Square _from, _to;
 

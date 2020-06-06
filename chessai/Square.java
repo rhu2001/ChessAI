@@ -32,7 +32,7 @@ public final class Square implements Comparable<Square> {
     static final Pattern SQ_REGEX = Pattern.compile("([a-h][1-8])");
 
     /**
-     * Return the (unique) chess.Square denoting COL ROW.
+     * Return the unique square at COL ROW.
      *
      * @param col Column of square.
      * @param row Row of square.
@@ -47,13 +47,13 @@ public final class Square implements Comparable<Square> {
     }
 
     /**
-     * Return the (unique) chess.Square denoting the position in POS, in the
+     * Return the unique square denoting the position in POS, in the
      * standard text format for a square (e.g. a4). Return null if POS
      * does not denote a valid square designation.
      *
      * @param pos Position of the square.
      *
-     * @return The chess.Square at the position if it exists.
+     * @return The square at the position if it exists.
      */
     static Square sq(String pos) {
         if (SQ_REGEX.matcher(pos).matches()) {
@@ -95,7 +95,8 @@ public final class Square implements Comparable<Square> {
     }
 
     /**
-     * The chess.Square (COL, ROW).
+     * The square (COL, ROW).
+     *
      * @param col Column of this square.
      * @param row Row of this square.
      */

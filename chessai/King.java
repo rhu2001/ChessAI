@@ -10,7 +10,7 @@ public class King extends Piece {
     /**
      * Creates a king with the given color.
      *
-     * @param color chess.Color to assign to this king.
+     * @param color Color to assign to this king.
      */
     public King(Color color) {
         _color = color;

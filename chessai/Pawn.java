@@ -10,7 +10,7 @@ public class Pawn extends Piece {
     /**
      * Creates a pawn with the given color.
      *
-     * @param color chess.Color to assign to this pawn.
+     * @param color Color to assign to this pawn.
      */
     public Pawn(Color color) {
         _color = color;

@@ -82,7 +82,7 @@ public class Board {
     }
 
     /**
-     * Sets the Square SQ to PIECE. If NEXT is
+     * Sets the square SQ to PIECE. If NEXT is
      * not null, sets the turn to NEXT.
      *
      * @param sq Square to set.
@@ -98,7 +98,7 @@ public class Board {
     }
 
     /**
-     * Sets the Square SQ to PIECE.
+     * Sets the square SQ to PIECE.
      *
      * @param sq Square set.
      * @param piece Piece to set SQ to.

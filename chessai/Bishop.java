@@ -10,7 +10,7 @@ public class Bishop extends Piece {
     /**
      * Creates a bishop with the given color.
      *
-     * @param color chess.Color to assign to this bishop.
+     * @param color Color to assign to this bishop.
      */
     public Bishop(Color color) {
         _color = color;

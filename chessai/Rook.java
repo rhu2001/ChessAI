@@ -10,7 +10,7 @@ public class Rook extends Piece {
     /**
      * Creates a rook with the given color.
      *
-     * @param color chess.Color to assign to this rook.
+     * @param color Color to assign to this rook.
      */
     public Rook(Color color) {
         _color = color;

@@ -10,7 +10,7 @@ public class Queen extends Piece {
     /**
      * Creates a queen with the given color.
      *
-     * @param color chess.Color to assign to this queen.
+     * @param color Color to assign to this queen.
      */
     public Queen(Color color) {
         _color = color;

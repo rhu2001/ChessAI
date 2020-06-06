@@ -10,7 +10,7 @@ public class Knight extends Piece {
     /**
      * Creates a knight with the given color.
      *
-     * @param color chess.Color to assign to this knight.
+     * @param color Color to assign to this knight.
      */
     public Knight(Color color) {
         _color = color;
