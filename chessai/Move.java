@@ -110,6 +110,31 @@ public class Move {
         return _captured;
     }
 
+    /**
+     * Returns the equivalent of the current move but
+     * with the specified captured piece.
+     *
+     * @param c Captured piece.
+     *
+     * @return The capture move.
+     */
+    Move capture(char c) {
+        if (_captured != '\0') {
+            return switch (c) {
+                case '\0' -> _moves[_from.index()][_to.index()][0];
+                case 'K' -> _moves[_from.index()][_to.index()][1];
+                case 'Q' -> _moves[_from.index()][_to.index()][2];
+                case 'R' -> _moves[_from.index()][_to.index()][3];
+                case 'B' -> _moves[_from.index()][_to.index()][4];
+                case 'N' -> _moves[_from.index()][_to.index()][5];
+                case 'P' -> _moves[_from.index()][_to.index()][6];
+                default -> throw new IllegalStateException("Unexpected value: " + c);
+            };
+        } else {
+            throw new IllegalStateException("This move is already a capture.");
+        }
+    }
+
     @Override
     public String toString() {
         return _from + "-" + _to;

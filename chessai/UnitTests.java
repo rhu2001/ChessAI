@@ -4,6 +4,7 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 import static chessai.Square.*;
+import static chessai.Move.*;
 
 /**
  * Unit tests.
@@ -13,7 +14,13 @@ import static chessai.Square.*;
 public class UnitTests {
 
     @Test
-    public void possibleTests() {
+    public void squareEqualityTests() {
+        assertTrue(sq("a1") == sq("a1"));
+        assertFalse(sq("a1") == sq("a2"));
+    }
+
+    @Test
+    public void squarePossibleTests() {
         /*
          * Basic 8 diagonal directions one space away.
          */
@@ -55,5 +62,13 @@ public class UnitTests {
          */
         assertFalse(sq("a1").isPossibleMove(sq("c4")));
         assertFalse(sq("d3").isPossibleMove(sq("a2")));
+    }
+
+    @Test
+    public void moveEqualityTests() {
+        assertTrue(mv("a1-a2", 'N') == mv("a1-a2", 'N'));
+        assertFalse(mv("a1-a2", 'N') == mv("a1-a2", '\0'));
+        assertFalse(mv("a1-a3", 'N') == mv("a1-a2", 'N'));
+        assertFalse(mv("a1-a3", 'N') == mv("a1-a2", 'K'));
     }
 }

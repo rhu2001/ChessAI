@@ -1,5 +1,8 @@
 package chessai;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static chessai.Square.*;
 import static chessai.Color.*;
 
@@ -69,6 +72,8 @@ public class Board {
         set(sq("g7"), new Pawn(BLACK));
         set(sq("h7"), new Pawn(BLACK));
 
+        _movesMade.clear();
+
         _turn = WHITE;
     }
 
@@ -107,6 +112,31 @@ public class Board {
         set(sq, piece, null);
     }
 
+    /** Makes a move on the board.
+     *
+     * @param mv Move to make.
+     */
+    void makeMove(Move mv) {
+        if (get(mv.getTo()) != null) {
+            _movesMade.add(mv.capture(get(mv.getTo()).abbr()));
+        } else {
+            _movesMade.add(mv);
+        }
+        Piece moving = get(mv.getFrom());
+        set(mv.getFrom(), null);
+        set(mv.getTo(), moving);
+
+        _turn = _turn.opposite();
+    }
+
+    void undo() {
+        assert _movesMade.size() > 0;
+
+        Move undo = _movesMade.get(_movesMade.size() - 1);
+        Piece moving = get(undo.getTo());
+        Piece captured = null;
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -135,4 +165,9 @@ public class Board {
      * The color that is to move.
      */
     private Color _turn;
+
+    /**
+     * Board history.
+     */
+    private final List<Move> _movesMade = new ArrayList<>();
 }
