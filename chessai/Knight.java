@@ -17,6 +17,11 @@ public class Knight extends Piece {
     }
 
     @Override
+    Knight copy() {
+        return new Knight(_color);
+    }
+
+    @Override
     char abbr() {
         return 'N';
     }

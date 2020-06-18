@@ -88,7 +88,9 @@ public class Board {
 
     /**
      * Sets the square SQ to PIECE. If NEXT is
-     * not null, sets the turn to NEXT.
+     * not null, sets the turn to NEXT. If
+     * PROMOTION is not null and a promotion is valid,
+     * the pawn is promoted to it.
      *
      * @param sq Square to set.
      * @param piece Piece to set SQ to.
@@ -115,18 +117,55 @@ public class Board {
     /** Makes a move on the board.
      *
      * @param mv Move to make.
+     * @param promotion The piece to promote to.
      */
-    void makeMove(Move mv) {
-        if (get(mv.getTo()) != null) {
+    void makeMove(Move mv, Piece promotion) {
+        assert isLegal(mv);
+
+        if (get(mv.getTo()) != null && !mv.isCastle()) {
             _movesMade.add(mv.capture(get(mv.getTo()).abbr()));
         } else {
             _movesMade.add(mv);
         }
-        Piece moving = get(mv.getFrom());
-        set(mv.getFrom(), null);
-        set(mv.getTo(), moving);
+
+        if (mv.isCastle()) {
+            Piece king = get(mv.getFrom());
+            Piece rook = null;
+
+            if (sq("c1") == mv.getTo()) {
+                rook = get(sq("a1"));
+            } else if (sq("g1") == mv.getTo()) {
+                rook = get(sq("h1"));
+            } else if (sq("c8") == mv.getTo()) {
+                rook = get(sq("a8"));
+            } else if (sq("g8") == mv.getTo()) {
+                rook = get(sq("h8"));
+            }
+
+            set(mv.getFrom(), rook);
+            set(mv.getTo(), king);
+        } else if (get(mv.getFrom()) instanceof Pawn && mv.isPossiblePromotion()) {
+            set(mv.getFrom(), null);
+            set(mv.getTo(), promotion);
+        } else {
+            Piece moving = get(mv.getFrom());
+            set(mv.getFrom(), null);
+            set(mv.getTo(), moving);
+        }
 
         _turn = _turn.opposite();
+    }
+
+    /**
+     * Returns whether the specified move
+     * is legal on this board.
+     *
+     * @param mv Move to check.
+     * @return TRUE iff MV is a legal move
+     * on this board.
+     */
+    boolean isLegal(Move mv) {
+        return true;
     }
 
     void undo() {
@@ -142,7 +181,7 @@ public class Board {
         StringBuilder sb = new StringBuilder();
         sb.append("===\n");
         for (int r = BOARD_SIZE - 1; r >= 0; r -= 1) {
-            sb.append("    ");
+            sb.append("    ").append(r + 1).append(" ");
             for (int c = 0; c < BOARD_SIZE; c++) {
                 if (get(sq(c, r)) != null) {
                     sb.append(get(sq(c, r)).symbol()).append(" ");
@@ -152,6 +191,7 @@ public class Board {
             }
             sb.append("\n");
         }
+        sb.append("    ").append("  ").append("a b c d e f g h\n");
         sb.append("Next move: ").append(_turn.fullName()).append("\n===\n");
         return sb.toString();
     }

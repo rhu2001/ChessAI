@@ -17,6 +17,11 @@ public class Bishop extends Piece {
     }
 
     @Override
+    Bishop copy() {
+        return new Bishop(_color);
+    }
+
+    @Override
     char abbr() {
         return 'B';
     }

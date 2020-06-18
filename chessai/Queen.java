@@ -17,6 +17,11 @@ public class Queen extends Piece {
     }
 
     @Override
+    Queen copy() {
+        return new Queen(_color);
+    }
+
+    @Override
     char abbr() {
         return 'Q';
     }

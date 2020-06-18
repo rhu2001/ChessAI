@@ -17,6 +17,11 @@ public class Pawn extends Piece {
     }
 
     @Override
+    Pawn copy() {
+        return new Pawn(_color);
+    }
+
+    @Override
     char abbr() {
         return 'P';
     }

@@ -9,13 +9,11 @@ package chessai;
 public abstract class Piece {
 
     /**
-     * Gets the chess.Color of this piece.
+     * Returns a copy of this piece.
      *
-     * @return _color.
+     * @return Copy of this.
      */
-    Color getColor() {
-        return _color;
-    }
+    abstract Piece copy();
 
     /**
      * One-letter abbreviation of this
@@ -34,7 +32,16 @@ public abstract class Piece {
     abstract char symbol();
 
     /**
-     * chess.Color of this piece.
+     * Gets the Color of this piece.
+     *
+     * @return _color.
+     */
+    Color getColor() {
+        return _color;
+    }
+
+    /**
+     * Color of this piece.
      */
     protected Color _color;
 }

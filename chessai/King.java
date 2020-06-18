@@ -17,6 +17,11 @@ public class King extends Piece {
     }
 
     @Override
+    King copy() {
+        return new King(_color);
+    }
+
+    @Override
     char abbr() {
         return 'K';
     }

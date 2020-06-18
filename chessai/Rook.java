@@ -17,6 +17,11 @@ public class Rook extends Piece {
     }
 
     @Override
+    Rook copy() {
+        return new Rook(_color);
+    }
+
+    @Override
     char abbr() {
         return 'R';
     }
