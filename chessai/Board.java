@@ -187,27 +187,69 @@ public class Board {
         }
 
         if (mv.isCastle()) {
-            List<Piece> pieces = getCastlePieces(mv);
+            return isLegalCastle(mv);
+        }
+        return true;
+    }
 
-            Piece king = pieces.get(0);
-            Piece rook = pieces.get(1);
+    /**
+     * TRUE iff MV is a legal castle move.
+     *
+     * @param mv Move to check.
+     * @return Whether MV is a legal castle move.
+     */
+    boolean isLegalCastle(Move mv) {
+        assert mv.isCastle();
 
-            if (!(king instanceof King && rook instanceof Rook
-                    && king.hasMoved() && rook.hasMoved())) {
+        List<Piece> pieces = getCastlePieces(mv);
+
+        Piece king = pieces.get(0);
+        Piece rook = pieces.get(1);
+
+        if (!(king instanceof King && rook instanceof Rook
+                && king.hasMoved() && rook.hasMoved())) {
+            return false;
+        }
+
+        Square sq = mv.getFrom();
+        int dir = mv.getFrom().direction(mv.getTo());
+
+        while (sq != mv.getTo()) {
+            if (get(sq) != null || inCheck(sq, king.getColor())) {
                 return false;
             }
+            sq = sq.moveDest(dir, 1);
+        }
 
-            Square sq = mv.getFrom();
-            int dir = mv.getFrom().direction(mv.getTo());
+        return inCheck(sq, king.getColor());
+    }
 
-            while (sq != mv.getTo()) {
-                if (get(sq) != null || inCheck(sq, king.getColor())) {
-                    return false;
-                }
-                sq = sq.moveDest(dir, 1);
+    /**
+     * TRUE iff MV is a legal king move.
+     *
+     * @param mv Move to check.
+     * @return Whether a king can make the move.
+     */
+    boolean isLegalKing(Move mv) {
+        return mv.distance() == 1 && !inCheck(mv.getTo(), get(mv.getFrom()).getColor());
+    }
+
+    /**
+     * TRUE iff MV is a legal rook move.
+     *
+     * @param mv Move to check.
+     * @return Whether a rook can make the move.
+     */
+    boolean isLegalRook(Move mv) {
+        int dir = mv.direction();
+        if (dir != 0 && dir != 2 && dir != 4 && dir != 6) {
+            return false;
+        }
+        Square sq = mv.getFrom().moveDest(dir, 1);
+        while (sq != mv.getTo()) {
+            if (get(sq) != null) {
+                return false;
             }
-
-            return inCheck(sq, king.getColor());
         }
         return true;
     }

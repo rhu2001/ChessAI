@@ -131,6 +131,24 @@ public class Move {
     }
 
     /**
+     * Distance between _from and _to.
+     *
+     * @return Distance of this move.
+     */
+    int distance() {
+        return _from.distance(_to);
+    }
+
+    /**
+     * Direction of this move.
+     *
+     * @return Direction from _from to _to.
+     */
+    int direction() {
+        return _from.direction(_to);
+    }
+
+    /**
      * Returns true iff this move is a capture.
      *
      * @return Whether this move is a capture.

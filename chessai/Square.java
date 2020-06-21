@@ -119,6 +119,31 @@ public final class Square implements Comparable<Square> {
     }
 
     /**
+     * Return distance (number of squares) to OTHER.
+     *
+     * @param other Other square.
+     * @return Distance to OTHER.
+     */
+    int distance(Square other) {
+        return Math.max(Math.abs(_row - other._row),
+                Math.abs(_col - other._col));
+    }
+
+    /**
+     * TRUE iff this square is on a horizontal, vertical,
+     * or diagonal line from OTHER.
+     *
+     * @param other Other square.
+     * @return Whether this square is on a valid line path
+     * to OTHER.
+     */
+    boolean straightLine(Square other) {
+        return this != other
+                && ((this.row() == other.row() || this.col() == other.col())
+                || (Math.abs(this.col() - other.col()) == Math.abs(this.row() - other.row())));
+    }
+
+    /**
      * Return the direction (an int as defined in the documentation
      * for moveDest) of the move THIS-TO.
      *
@@ -126,9 +151,13 @@ public final class Square implements Comparable<Square> {
      * @return Direction to the destination.
      */
     int direction(Square to) {
-        int dc = col() > to.col() ? 0 : col() == to.col() ? 1 : 2,
-                dr = row() > to.row() ? 0 : row() == to.row() ? 1 : 2;
-        return DISP_TO_DIR[dc][dr];
+        if (straightLine(to)) {
+            int dc = col() > to.col() ? 0 : col() == to.col() ? 1 : 2,
+                    dr = row() > to.row() ? 0 : row() == to.row() ? 1 : 2;
+            return DISP_TO_DIR[dc][dr];
+        } else {
+            return -1;
+        }
     }
 
     /**

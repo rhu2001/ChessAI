@@ -65,6 +65,11 @@ public class UnitTests {
     }
 
     @Test
+    public void squareDirectionTests() {
+
+    }
+
+    @Test
     public void moveEqualityTests() {
         assertTrue(mv("a1-a2", 'N') == mv("a1-a2", 'N'));
         assertFalse(mv("a1-a2", 'N') == mv("a1-a2", '\0'));
