@@ -11,19 +11,21 @@ public class Pawn extends Piece {
      * Creates a pawn with the given color.
      *
      * @param color Color to assign to this pawn.
+     * @param sq Location
      */
-    public Pawn(Color color) {
+    public Pawn(Color color, Square sq) {
         _color = color;
+        _sq = sq;
     }
 
     @Override
     Pawn copy() {
-        return new Pawn(_color);
+        return new Pawn(_color, _sq);
     }
 
     @Override
     char abbr() {
-        return 'P';
+        return '\0';
     }
 
     @Override

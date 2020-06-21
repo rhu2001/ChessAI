@@ -11,14 +11,16 @@ public class Queen extends Piece {
      * Creates a queen with the given color.
      *
      * @param color Color to assign to this queen.
+     * @param sq Location
      */
-    public Queen(Color color) {
+    public Queen(Color color, Square sq) {
         _color = color;
+        _sq = sq;
     }
 
     @Override
     Queen copy() {
-        return new Queen(_color);
+        return new Queen(_color, _sq);
     }
 
     @Override

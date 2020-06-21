@@ -11,14 +11,19 @@ public class Rook extends Piece {
      * Creates a rook with the given color.
      *
      * @param color Color to assign to this rook.
+     * @param sq Location
      */
-    public Rook(Color color) {
+    public Rook(Color color, Square sq) {
         _color = color;
+        _sq = sq;
+        _hasMoved = false;
     }
 
     @Override
     Rook copy() {
-        return new Rook(_color);
+        Rook copy = new Rook(_color, _sq);
+        copy.setMoved(_hasMoved);
+        return copy;
     }
 
     @Override

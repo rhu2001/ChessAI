@@ -36,7 +36,6 @@ public final class Square implements Comparable<Square> {
      *
      * @param col Column of square.
      * @param row Row of square.
-     *
      * @return The square at the given column and row.
      */
     static Square sq(int col, int row) {
@@ -52,7 +51,6 @@ public final class Square implements Comparable<Square> {
      * does not denote a valid square designation.
      *
      * @param pos Position of the square.
-     *
      * @return The square at the position if it exists.
      */
     static Square sq(String pos) {
@@ -87,7 +85,6 @@ public final class Square implements Comparable<Square> {
      *
      * @param col Column to check.
      * @param row Row to check.
-     *
      * @return Whether a COL ROW pairing exists.
      */
     static boolean exists(int col, int row) {
@@ -111,7 +108,6 @@ public final class Square implements Comparable<Square> {
      * a move from this square to OTHER be made legally.
      *
      * @param other Other square.
-     *
      * @return Whether the move is possible.
      */
     boolean isPossibleMove(Square other) {
@@ -120,6 +116,43 @@ public final class Square implements Comparable<Square> {
             || (Math.abs(this.col() - other.col()) == Math.abs(this.row() - other.row()))
             || (Math.abs(this.col() - other.col()) == 2 && Math.abs(this.row() - other.row()) == 1)
             || (Math.abs(this.row() - other.row()) == 2 && Math.abs(this.col() - other.col()) == 1));
+    }
+
+    /**
+     * Return the direction (an int as defined in the documentation
+     * for moveDest) of the move THIS-TO.
+     *
+     * @param to Destination square.
+     * @return Direction to the destination.
+     */
+    int direction(Square to) {
+        int dc = col() > to.col() ? 0 : col() == to.col() ? 1 : 2,
+                dr = row() > to.row() ? 0 : row() == to.row() ? 1 : 2;
+        return DISP_TO_DIR[dc][dr];
+    }
+
+    /**
+     * Return the Square that is STEPS>0 squares away from me in direction
+     * DIR, or null if there is no such square.
+     * DIR = 0 for north, 1 for north-east, 2 for east, etc., up to
+     * 7 for north-west. If DIR has another value, return null.
+     *
+     * @param dir Direction.
+     * @param steps Number of steps to take.
+     * @return Square that is the destination of of such move.
+     */
+    Square moveDest(int dir, int steps) {
+        if (dir < 0 || dir > 7 || steps <= 0) {
+            return null;
+        }
+
+        int c = col() + DC[dir] * steps,
+                r = row() + DR[dir] * steps;
+        if (exists(c, r)) {
+            return sq(c, r);
+        } else {
+            return null;
+        }
     }
 
     @Override
@@ -156,6 +189,22 @@ public final class Square implements Comparable<Square> {
      * The cache of all created squares, by row and column.
      */
     private static final Square[][] SQUARES = new Square[BOARD_SIZE][BOARD_SIZE];
+
+    /**
+     * The increments (delta column, delta row) from one Square to the
+     * next indexed by direction.
+     */
+    private static final int[]
+            DC = {  0,  1,  1,  1,  0, -1, -1, -1 },
+            DR = {  1,  1,  0, -1, -1, -1,  0,  1 };
+
+    /**
+     * Mapping of (dc + 1, dr + 1) to direction, where (dc, dr) are the
+     * column and row displacements of an adjacent square.
+     */
+    private static final int[][] DISP_TO_DIR = {
+            { 5, 6, 7 }, { 4, -1, 0 }, { 3, 2, 1 }
+    };
 
     /**
      * A list of all Squares on a board.

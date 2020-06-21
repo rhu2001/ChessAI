@@ -16,9 +16,25 @@ public class Move {
      * Returns the move starting and ending at the specified squares
      * with the given captured piece.
      *
+     * @param from Starting square.
+     * @param to Destination square.
+     * @param captured Captured piece.
+     * @return Move with specified parameters.
+     */
+    static Move mv(Square from, Square to, char captured) {
+        if (from != null && to != null) {
+            return findMove(captured, from, to);
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * Returns the move starting and ending at the specified squares
+     * with the given captured piece.
+     *
      * @param s Starting and ending squares in String format.
      * @param captured Captured piece.
-     *
      * @return Move with specified parameters.
      */
     static Move mv(String s, char captured) {
@@ -32,21 +48,24 @@ public class Move {
     }
 
     /**
-     * Returns the move starting and ending at the specified squares
-     * with the given captured piece.
+     * Returns the move starting and ending at the specified squares.
      *
      * @param from Starting square.
-     * @param to Destination square.
-     * @param captured Captured piece.
-     *
+     * @param to Ending square.
      * @return Move with specified parameters.
      */
-    static Move mv(Square from, Square to, char captured) {
-        if (from != null && to != null) {
-            return findMove(captured, from, to);
-        } else {
-            return null;
-        }
+    static Move mv(Square from, Square to) {
+        return mv(from, to, '\0');
+    }
+
+    /**
+     * Returns the move starting and ending at the specified squares.
+     *
+     * @param s Starting and ending squares in String format.
+     * @return Move with specified parameters.
+     */
+    static Move mv(String s) {
+        return mv(s, '\0');
     }
 
     /**
@@ -56,7 +75,6 @@ public class Move {
      * @param c Captured piece.
      * @param from Start square.
      * @param to Destination square.
-     *
      * @return Move corresponding to parameters.
      */
     private static Move findMove(char c, Square from, Square to) {
@@ -135,7 +153,6 @@ public class Move {
      * with the specified captured piece.
      *
      * @param c Captured piece.
-     *
      * @return The capture move.
      */
     Move capture(char c) {

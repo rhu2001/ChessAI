@@ -3,6 +3,9 @@ package chessai;
 public class Main {
 
     public static void main(String... args) {
-        System.out.println(new Board());
+        Board b = new Board();
+        System.out.println(b);
+        System.out.println(b._whitePieces);
+        System.out.println(b._blackPieces);
     }
 }
