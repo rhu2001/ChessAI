@@ -116,7 +116,7 @@ public class Board {
         if (get(sq) != null) {
             removePiece(get(sq));
         }
-        if (!hasPiece(piece)) {
+        if (piece != null && !hasPiece(piece)) {
             addPiece(piece);
         }
         if (piece instanceof King) {
@@ -153,19 +153,30 @@ public class Board {
             _movesMade.add(mv);
         }
 
-        if (mv.isCastle()) {
+        if (get(mv.getFrom()) instanceof King && mv.isCastle()) {
             List<Piece> pieces = getCastlePieces(mv);
 
             Piece king = pieces.get(0);
             Piece rook = pieces.get(1);
 
-            set(mv.getFrom(), rook);
+            int dir = rook.getLocation().direction(king.getLocation());
+
+            king.moveTo(mv.getTo());
+
+            set(mv.getFrom(), null);
             set(mv.getTo(), king);
+
+            set(rook.getLocation(), null);
+            rook.moveTo(king.getLocation().moveDest(dir, 1));
+            set(rook.getLocation(), rook);
         } else if (get(mv.getFrom()) instanceof Pawn && mv.isPossiblePromotion()) {
             set(mv.getFrom(), null);
             set(mv.getTo(), promotion);
         } else {
             Piece moving = get(mv.getFrom());
+
+            moving.moveTo(mv.getTo());
+
             set(mv.getFrom(), null);
             set(mv.getTo(), moving);
         }
@@ -173,32 +184,45 @@ public class Board {
         _turn = _turn.opposite();
     }
 
+    boolean isLegal(Move mv) {
+        return isPossible(mv) && get(mv.getFrom()).getColor() == _turn;
+    }
+
     /**
      * Returns whether the specified move
-     * is legal on this board.
+     * is possible on this board.
      *
      * @param mv Move to check.
-     * @return TRUE iff MV is a legal move
+     * @return TRUE iff MV is a possible move
      * on this board.
      */
-    boolean isLegal(Move mv) {
-        if (get(mv.getFrom()).getColor() != _turn) {
+    boolean isPossible(Move mv) {
+        if (mv == null || get(mv.getFrom()) == null) {
             return false;
         }
 
         if (mv.isCastle()) {
-            return isLegalCastle(mv);
+            return isPossibleCastle(mv);
         }
-        return true;
+
+        return switch (get(mv.getFrom()).abbr()) {
+            case 'B' -> isPossibleBishop(mv);
+            case 'K' -> isPossibleKing(mv);
+            case 'N' -> isPossibleKnight(mv);
+            case '\0' -> isPossiblePawn(mv);
+            case 'Q' -> isPossibleQueen(mv);
+            case 'R' -> isPossibleRook(mv);
+            default -> false;
+        };
     }
 
     /**
-     * TRUE iff MV is a legal castle move.
+     * TRUE iff MV is a possible castle move.
      *
      * @param mv Move to check.
-     * @return Whether MV is a legal castle move.
+     * @return Whether MV is a possible castle move.
      */
-    boolean isLegalCastle(Move mv) {
+    boolean isPossibleCastle(Move mv) {
         assert mv.isCastle();
 
         List<Piece> pieces = getCastlePieces(mv);
@@ -206,13 +230,13 @@ public class Board {
         Piece king = pieces.get(0);
         Piece rook = pieces.get(1);
 
-        if (!(king instanceof King && rook instanceof Rook
-                && king.hasMoved() && rook.hasMoved())) {
+        if (!(king instanceof King && rook instanceof Rook)
+                || (king.hasMoved() || rook.hasMoved())) {
             return false;
         }
 
-        Square sq = mv.getFrom();
         int dir = mv.getFrom().direction(mv.getTo());
+        Square sq = mv.getFrom().moveDest(dir, 1);
 
         while (sq != mv.getTo()) {
             if (get(sq) != null || inCheck(sq, king.getColor())) {
@@ -220,27 +244,108 @@ public class Board {
             }
             sq = sq.moveDest(dir, 1);
         }
-
-        return inCheck(sq, king.getColor());
+        return !inCheck(sq, king.getColor());
     }
 
     /**
-     * TRUE iff MV is a legal king move.
+     * TRUE iff MV is a possible bishop move.
+     *
+     * @param mv Move to check.
+     * @return Whether a bishop can make the move.
+     */
+    boolean isPossibleBishop(Move mv) {
+        int dir = mv.direction();
+        if (dir != 1 && dir != 3 && dir != 5 && dir != 7) {
+            return false;
+        }
+        Square sq = mv.getFrom().moveDest(dir, 1);
+        while (sq != mv.getTo()) {
+            if (get(sq) != null) {
+                return false;
+            }
+            sq = sq.moveDest(dir, 1);
+        }
+        return get(mv.getTo()) == null || get(mv.getTo()).getColor() != get(mv.getFrom()).getColor();
+    }
+
+    /**
+     * TRUE iff MV is a possible king move.
      *
      * @param mv Move to check.
      * @return Whether a king can make the move.
      */
-    boolean isLegalKing(Move mv) {
-        return mv.distance() == 1 && !inCheck(mv.getTo(), get(mv.getFrom()).getColor());
+    boolean isPossibleKing(Move mv) {
+        return mv.distance() == 1 && !inCheck(mv.getTo(), get(mv.getFrom()).getColor())
+                && (get(mv.getTo()) == null || get(mv.getTo()).getColor() != get(mv.getFrom()).getColor());
     }
 
     /**
-     * TRUE iff MV is a legal rook move.
+     * TRUE iff MV is a possible knight move.
+     *
+     * @param mv Move to check.
+     * @return Whether a king can make the move.
+     */
+    boolean isPossibleKnight(Move mv) {
+        int rowDiff = Math.abs(mv.getTo().row() - mv.getFrom().row());
+        int colDiff = Math.abs(mv.getTo().col() - mv.getFrom().col());
+        return ((rowDiff == 1 && colDiff == 2) || (rowDiff == 2 && colDiff == 1))
+                && (get(mv.getTo()) == null || get(mv.getTo()).getColor() != get(mv.getFrom()).getColor());
+    }
+
+    /**
+     * TRUE iff MV is a possible pawn move.
+     *
+     * @param mv Move to check.
+     * @return Whether a pawn can make the move.
+     */
+    boolean isPossiblePawn(Move mv) {
+        Color color = get(mv.getFrom()).getColor();
+        return switch (color) {
+            case WHITE -> mv.getTo().row() > mv.getFrom().row()
+                            && ((mv.direction() == 0 && get(mv.getTo()) == null)
+                                || ((mv.direction() == 1 || mv.direction() == 7) && get(mv.getTo()) != null
+                                    && get(mv.getTo()).getColor() != get(mv.getFrom()).getColor()))
+                            && (mv.distance() == 1
+                                || (!get(mv.getFrom()).hasMoved()
+                                    && mv.direction() == 0 && mv.distance() == 2));
+            case BLACK -> mv.getTo().row() < mv.getFrom().row()
+                            && ((mv.direction() == 4 && get(mv.getTo()) == null)
+                                || ((mv.direction() == 3 || mv.direction() == 5) && get(mv.getTo()) != null
+                                    && get(mv.getTo()).getColor() != get(mv.getFrom()).getColor()))
+                            && (mv.distance() == 1
+                                || (!get(mv.getFrom()).hasMoved()
+                                    && mv.direction() == 4 && mv.distance() == 2));
+        };
+    }
+
+    /**
+     * TRUE iff MV is a possible queen move.
+     *
+     * @param mv Move to check.
+     * @return Whether a queen can make the move.
+     */
+    boolean isPossibleQueen(Move mv) {
+        int dir = mv.direction();
+        if (dir == -1) {
+            return false;
+        }
+        Square sq = mv.getFrom().moveDest(dir, 1);
+        while (sq != mv.getTo()) {
+            if (get(sq) != null) {
+                return false;
+            }
+            sq = sq.moveDest(dir, 1);
+        }
+        return get(mv.getTo()) == null || get(mv.getTo()).getColor() != get(mv.getFrom()).getColor();
+    }
+
+    /**
+     * TRUE iff MV is a possible rook move.
      *
      * @param mv Move to check.
      * @return Whether a rook can make the move.
      */
-    boolean isLegalRook(Move mv) {
+    boolean isPossibleRook(Move mv) {
         int dir = mv.direction();
         if (dir != 0 && dir != 2 && dir != 4 && dir != 6) {
             return false;
@@ -250,8 +355,9 @@ public class Board {
             if (get(sq) != null) {
                 return false;
             }
+            sq = sq.moveDest(dir, 1);
         }
-        return true;
+        return get(mv.getTo()) == null || get(mv.getTo()).getColor() != get(mv.getFrom()).getColor();
     }
 
     /**

@@ -66,6 +66,7 @@ public abstract class Piece {
      */
     void moveTo(Square location) {
         _sq = location;
+        _hasMoved = true;
     }
 
     /**
