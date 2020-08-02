@@ -8,6 +8,11 @@ package chessai;
 public class Rook extends Piece {
 
     /**
+     * Denotes the character abbreviation of the rook.
+     */
+    static final char ABBR = 'R';
+
+    /**
      * Creates a rook with the given color.
      *
      * @param color Color to assign to this rook.
@@ -28,7 +33,7 @@ public class Rook extends Piece {
 
     @Override
     char abbr() {
-        return 'R';
+        return ABBR;
     }
 
     @Override

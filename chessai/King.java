@@ -8,6 +8,11 @@ package chessai;
 public class King extends Piece {
 
     /**
+     * Denotes the character abbreviation of the king.
+     */
+    static final char ABBR = 'K';
+
+    /**
      * Creates a king with the given color.
      *
      * @param color Color to assign to this king.
@@ -28,7 +33,7 @@ public class King extends Piece {
 
     @Override
     char abbr() {
-        return 'K';
+        return ABBR;
     }
 
     @Override

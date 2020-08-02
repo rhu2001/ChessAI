@@ -250,6 +250,32 @@ public final class Square implements Comparable<Square> {
     }
 
     /**
+     *  A mapping of Square index s.index() to arrays of Squares adjacent to
+     *  Square s.
+     */
+    private static final Square[][] ADJACENT = new Square[ALL_SQUARES.length][];
+
+    static {
+        for (Square sq : ALL_SQUARES) {
+            int cl = Math.max(0, sq.col() - 1),
+                    cr = Math.min(sq.col() + 1, BOARD_SIZE - 1),
+                    rl = Math.max(0, sq.row() - 1),
+                    rr = Math.min(sq.row() + 1, BOARD_SIZE - 1);
+            ADJACENT[sq.index()] =
+                    new Square[(cr - cl + 1) * (rr - rl + 1) - 1];
+            for (int k = 0, r = rl; r <= rr; r += 1) {
+                for (int c = cl; c <= cr; c += 1) {
+                    if (r == sq.row() && c == sq.col()) {
+                        continue;
+                    }
+                    ADJACENT[sq.index()][k] = sq(c, r);
+                    k += 1;
+                }
+            }
+        }
+    }
+
+    /**
      * This square's row and column.
      */
     private final int _row, _col;

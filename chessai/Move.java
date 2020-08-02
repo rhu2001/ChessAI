@@ -13,6 +13,11 @@ import static chessai.Square.*;
 public class Move {
 
     /**
+     * Denotes the character representing a non-capturing move.
+     */
+    static final char NO_CAPTURE = '\1';
+
+    /**
      * Returns the move starting and ending at the specified squares
      * with the given captured piece.
      *
@@ -55,7 +60,7 @@ public class Move {
      * @return Move with specified parameters.
      */
     static Move mv(Square from, Square to) {
-        return mv(from, to, '\0');
+        return mv(from, to, NO_CAPTURE);
     }
 
     /**
@@ -65,7 +70,7 @@ public class Move {
      * @return Move with specified parameters.
      */
     static Move mv(String s) {
-        return mv(s, '\0');
+        return mv(s, NO_CAPTURE);
     }
 
     /**
@@ -79,13 +84,13 @@ public class Move {
      */
     private static Move findMove(char c, Square from, Square to) {
         return switch (c) {
-            case '\0' -> _moves[from.index()][to.index()][0];
+            case NO_CAPTURE -> _moves[from.index()][to.index()][0];
             case 'K' -> _moves[from.index()][to.index()][1];
             case 'Q' -> _moves[from.index()][to.index()][2];
             case 'R' -> _moves[from.index()][to.index()][3];
             case 'B' -> _moves[from.index()][to.index()][4];
             case 'N' -> _moves[from.index()][to.index()][5];
-            case 'P' -> _moves[from.index()][to.index()][6];
+            case '\0' -> _moves[from.index()][to.index()][6];
             default -> throw new IllegalStateException("Unexpected value: " + c);
         };
     }
@@ -154,7 +159,7 @@ public class Move {
      * @return Whether this move is a capture.
      */
     boolean isCapture() {
-        return _captured != '\0';
+        return _captured != NO_CAPTURE;
     }
 
     /**
@@ -174,7 +179,7 @@ public class Move {
      * @return The capture move.
      */
     Move capture(char c) {
-        if (_captured != '\0') {
+        if (_captured != NO_CAPTURE) {
             return findMove(c, _from, _to);
         } else {
             throw new IllegalStateException("This move is already a capture.");
@@ -230,19 +235,19 @@ public class Move {
         for (Square from : ALL_SQUARES) {
             for (Square to : ALL_SQUARES) {
                 if (from.isPossibleMove(to)) {
-                    _moves[from.index()][to.index()][0] = new Move(from, to, '\0', false);
+                    _moves[from.index()][to.index()][0] = new Move(from, to, NO_CAPTURE, false);
                     _moves[from.index()][to.index()][1] = new Move(from, to, 'K', false);
                     _moves[from.index()][to.index()][2] = new Move(from, to, 'Q', false);
                     _moves[from.index()][to.index()][3] = new Move(from, to, 'R', false);
                     _moves[from.index()][to.index()][4] = new Move(from, to, 'B', false);
                     _moves[from.index()][to.index()][5] = new Move(from, to, 'N', false);
-                    _moves[from.index()][to.index()][6] = new Move(from, to, 'P', false);
+                    _moves[from.index()][to.index()][6] = new Move(from, to, '\0', false);
                 }
             }
         }
-        _moves[sq("e1").index()][sq("c1").index()][0] = new Move(sq("e1"), sq("c1"), '\0', true);
-        _moves[sq("e1").index()][sq("g1").index()][0] = new Move(sq("e1"), sq("g1"), '\0', true);
-        _moves[sq("e8").index()][sq("c8").index()][0] = new Move(sq("e8"), sq("c8"), '\0', true);
-        _moves[sq("e8").index()][sq("g8").index()][0] = new Move(sq("e8"), sq("g8"), '\0', true);
+        _moves[sq("e1").index()][sq("c1").index()][0] = new Move(sq("e1"), sq("c1"), NO_CAPTURE, true);
+        _moves[sq("e1").index()][sq("g1").index()][0] = new Move(sq("e1"), sq("g1"), NO_CAPTURE, true);
+        _moves[sq("e8").index()][sq("c8").index()][0] = new Move(sq("e8"), sq("c8"), NO_CAPTURE, true);
+        _moves[sq("e8").index()][sq("g8").index()][0] = new Move(sq("e8"), sq("g8"), NO_CAPTURE, true);
     }
 }

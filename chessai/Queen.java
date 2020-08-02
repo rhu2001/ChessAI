@@ -8,6 +8,11 @@ package chessai;
 public class Queen extends Piece {
 
     /**
+     * Denotes the character abbreviation of the queen.
+     */
+    static final char ABBR = 'Q';
+
+    /**
      * Creates a queen with the given color.
      *
      * @param color Color to assign to this queen.
@@ -25,7 +30,7 @@ public class Queen extends Piece {
 
     @Override
     char abbr() {
-        return 'Q';
+        return ABBR;
     }
 
     @Override

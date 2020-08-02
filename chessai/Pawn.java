@@ -8,6 +8,11 @@ package chessai;
 public class Pawn extends Piece {
 
     /**
+     * Denotes the character abbreviation of the pawn.
+     */
+    static final char ABBR = '\0';
+
+    /**
      * Creates a pawn with the given color.
      *
      * @param color Color to assign to this pawn.
@@ -25,7 +30,7 @@ public class Pawn extends Piece {
 
     @Override
     char abbr() {
-        return '\0';
+        return ABBR;
     }
 
     @Override

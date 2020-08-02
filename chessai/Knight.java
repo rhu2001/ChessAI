@@ -8,6 +8,11 @@ package chessai;
 public class Knight extends Piece {
 
     /**
+     * Denotes the character abbreviation of the knight.
+     */
+    static final char ABBR = 'N';
+
+    /**
      * Creates a knight with the given color.
      *
      * @param color Color to assign to this knight.
@@ -25,7 +30,7 @@ public class Knight extends Piece {
 
     @Override
     char abbr() {
-        return 'N';
+        return ABBR;
     }
 
     @Override

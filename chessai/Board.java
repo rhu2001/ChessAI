@@ -206,12 +206,12 @@ public class Board {
         }
 
         return switch (get(mv.getFrom()).abbr()) {
-            case 'B' -> isPossibleBishop(mv);
-            case 'K' -> isPossibleKing(mv);
-            case 'N' -> isPossibleKnight(mv);
-            case '\0' -> isPossiblePawn(mv);
-            case 'Q' -> isPossibleQueen(mv);
-            case 'R' -> isPossibleRook(mv);
+            case Bishop.ABBR -> isPossibleBishop(mv);
+            case King.ABBR -> isPossibleKing(mv);
+            case Knight.ABBR -> isPossibleKnight(mv);
+            case Pawn.ABBR -> isPossiblePawn(mv);
+            case Queen.ABBR -> isPossibleQueen(mv);
+            case Rook.ABBR -> isPossibleRook(mv);
             default -> false;
         };
     }

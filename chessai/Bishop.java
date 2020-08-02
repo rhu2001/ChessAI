@@ -8,6 +8,11 @@ package chessai;
 public class Bishop extends Piece {
 
     /**
+     * Denotes the character abbreviation of the bishop.
+     */
+    static final char ABBR = 'B';
+
+    /**
      * Creates a bishop with the given color.
      *
      * @param color Color to assign to this bishop.
@@ -25,7 +30,7 @@ public class Bishop extends Piece {
 
     @Override
     char abbr() {
-        return 'B';
+        return ABBR;
     }
 
     @Override
