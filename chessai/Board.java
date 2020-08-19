@@ -1,6 +1,7 @@
 package chessai;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 
@@ -28,7 +29,71 @@ public class Board {
     static final int NUM_SQUARES = BOARD_SIZE * BOARD_SIZE;
 
     /**
+     * Default starting configuration of a chess board.
+     */
+    static final String[][] DEFAULT_LAYOUT = {
+            {"wr", "wn", "wb", "wq", "wk", "wb", "wn", "wr"},
+            {"wp", "wp", "wp", "wp", "wp", "wp", "wp", "wp"},
+            {},
+            {},
+            {},
+            {},
+            {"bp", "bp", "bp", "bp", "bp", "bp", "bp", "bp"},
+            {"br", "bn", "bb", "bq", "bk", "bb", "bn", "br"}
+    };
+
+    /**
+     * Converts a character to a Color.
+     *
+     * @param c First letter of color.
+     * @return Corresponding color, or null if
+     * character is invalid.
+     */
+    static Color getColor(char c) {
+        if (String.valueOf(c).toLowerCase().equals("w")) {
+            return WHITE;
+        } else if (String.valueOf(c).toLowerCase().equals("b")) {
+            return BLACK;
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * Generates a new piece from an abbreviation.
+     *
+     * @param abbr Piece abbreviation.
+     * @param color Color of piece.
+     * @param sq Square of piece.
+     *
+     * @return New piece with specified parameters.
+     */
+    static Piece generatePiece(char abbr, Color color, Square sq) {
+        abbr = String.valueOf(abbr).toLowerCase().charAt(0);
+        return switch (abbr) {
+            case 'b' -> new Bishop(color, sq);
+            case 'k' -> new King(color, sq);
+            case 'n' -> new Knight(color, sq);
+            case 'p', '\0' -> new Pawn(color, sq);
+            case 'q' -> new Queen(color, sq);
+            case 'r' -> new Rook(color, sq);
+            default -> null;
+        };
+    }
+
+    /**
      * Creates a new board.
+     *
+     * @param layout Starting layout of board.
+     * @param turn Color of starting turn.
+     */
+    Board(String[][] layout, Color turn) {
+        initialize(layout, turn);
+    }
+
+    /**
+     * Creates a new board on the default
+     * starting layout.
      */
     Board() {
         initialize();
@@ -36,61 +101,45 @@ public class Board {
 
     /**
      * Initializes the board to the given parameters.
+     *
+     * @param layout Layout of board.
+     * @param turn Color to move first.
      */
-    void initialize() {
-        set(sq("a1"), new Rook(WHITE, sq("a1")));
-        set(sq("b1"), new Knight(WHITE, sq("b1")));
-        set(sq("c1"), new Bishop(WHITE, sq("c1")));
-        set(sq("d1"), new Queen(WHITE, sq("d1")));
-        set(sq("e1"), new King(WHITE, sq("e1")));
-        updateKingSquare(sq("e1"), WHITE);
-        set(sq("f1"), new Bishop(WHITE, sq("f1")));
-        set(sq("g1"), new Knight(WHITE, sq("g1")));
-        set(sq("h1"), new Rook(WHITE, sq("h1")));
-
-        set(sq("a2"), new Pawn(WHITE, sq("a2")));
-        set(sq("b2"), new Pawn(WHITE, sq("b2")));
-        set(sq("c2"), new Pawn(WHITE, sq("c2")));
-        set(sq("d2"), new Pawn(WHITE, sq("d2")));
-        set(sq("e2"), new Pawn(WHITE, sq("e2")));
-        set(sq("f2"), new Pawn(WHITE, sq("f2")));
-        set(sq("g2"), new Pawn(WHITE, sq("g2")));
-        set(sq("h2"), new Pawn(WHITE, sq("h2")));
-
-        set(sq("a8"), new Rook(BLACK, sq("a8")));
-        set(sq("b8"), new Knight(BLACK, sq("b8")));
-        set(sq("c8"), new Bishop(BLACK, sq("c8")));
-        set(sq("d8"), new Queen(BLACK, sq("d8")));
-        set(sq("e8"), new King(BLACK, sq("e8")));
-        updateKingSquare(sq("e8"), BLACK);
-        set(sq("f8"), new Bishop(BLACK, sq("f8")));
-        set(sq("g8"), new Knight(BLACK, sq("g8")));
-        set(sq("h8"), new Rook(BLACK, sq("h8")));
-
-        set(sq("a7"), new Pawn(BLACK, sq("a7")));
-        set(sq("b7"), new Pawn(BLACK, sq("b7")));
-        set(sq("c7"), new Pawn(BLACK, sq("c7")));
-        set(sq("d7"), new Pawn(BLACK, sq("d7")));
-        set(sq("e7"), new Pawn(BLACK, sq("e7")));
-        set(sq("f7"), new Pawn(BLACK, sq("f7")));
-        set(sq("g7"), new Pawn(BLACK, sq("g7")));
-        set(sq("h7"), new Pawn(BLACK, sq("h7")));
-
-        for (int r = 0; r < 2; r++) {
-            for (int c = 0; c < 8; c++) {
-                _whitePieces.add(get(sq(c, r)));
-            }
-        }
-
-        for (int r = 6; r < 8; r++) {
-            for (int c = 0; c < 8; c++) {
-                _blackPieces.add(get(sq(c, r)));
+    void initialize(String[][] layout, Color turn) {
+        this.clear();
+        _whitePieces.clear();
+        _blackPieces.clear();
+        if (layout != null) {
+            for (int r = 0; r < layout.length; r++) {
+                for (int c = 0; c < layout.length; c++) {
+                    if (c < layout[r].length && layout[r][c] != null) {
+                        Color color = getColor(layout[r][c].charAt(0));
+                        set(sq(c, r), generatePiece(layout[r][c].charAt(1), color, sq(c, r)));
+                        if (get(sq(c, r)).abbr() == 'K') {
+                            updateKingSquare(sq(c, r), color);
+                        }
+                    }
+                }
             }
         }
 
         _movesMade.clear();
+        _turn = turn;
+    }
 
-        _turn = WHITE;
+    /**
+     * Initializes the board to the default starting
+     * configuration.
+     */
+    void initialize() {
+        initialize(DEFAULT_LAYOUT, WHITE);
+    }
+
+    /**
+     * Clears the board.
+     */
+    void clear() {
+        Arrays.fill(_board, null);
     }
 
     /**
@@ -139,18 +188,28 @@ public class Board {
         set(sq, piece, null);
     }
 
+    /**
+     * Makes a move on the board with no
+     * promotion.
+     *
+     * @param mv Move to make.
+     */
+    void makeMove(Move mv) {
+        makeMove(mv, null);
+    }
+
     /** Makes a move on the board.
      *
      * @param mv Move to make.
      * @param promotion The piece to promote to.
      */
-    void makeMove(Move mv, Piece promotion) {
+    void makeMove(Move mv, Character promotion) {
         assert isLegal(mv);
 
         if (get(mv.getTo()) != null && !mv.isCastle()) {
-            _movesMade.add(mv.capture(get(mv.getTo()).abbr()));
+            _movesMade.add(new MovePair(mv.capture(get(mv.getTo()).abbr()), get(mv.getFrom()).abbr()));
         } else {
-            _movesMade.add(mv);
+            _movesMade.add(new MovePair(mv, get(mv.getFrom()).abbr()));
         }
 
         if (get(mv.getFrom()) instanceof King && mv.isCastle()) {
@@ -171,7 +230,7 @@ public class Board {
             set(rook.getLocation(), rook);
         } else if (get(mv.getFrom()) instanceof Pawn && mv.isPossiblePromotion()) {
             set(mv.getFrom(), null);
-            set(mv.getTo(), promotion);
+            set(mv.getTo(), generatePiece(promotion, _turn, mv.getTo()));
         } else {
             Piece moving = get(mv.getFrom());
 
@@ -182,6 +241,25 @@ public class Board {
         }
 
         _turn = _turn.opposite();
+    }
+
+    /**
+     * Undoes the previous move made.
+     *
+     * @return TRUE iff the undo was successful.
+     */
+    boolean undo() {
+        if (_movesMade.size() == 0) {
+            return false;
+        }
+
+        Move mv = _movesMade.get(_movesMade.size() - 1).mv();
+        char moving = _movesMade.remove(_movesMade.size() - 1).moving();
+
+        set(mv.getTo(), generatePiece(mv.getCaptured(), _turn, mv.getTo()));
+        set(mv.getFrom(), generatePiece(moving, _turn.opposite(), mv.getFrom()), _turn.opposite());
+
+        return true;
     }
 
     boolean isLegal(Move mv) {
@@ -248,6 +326,31 @@ public class Board {
     }
 
     /**
+     * Checks all the squares between the start and end
+     * of a move for occupation. Returns TRUE iff all
+     * the squares between the start and end are empty or
+     * all but the last are empty and the last is the
+     * opposite color.
+     *
+     * @param mv Move to check.
+     * @param dir Direction of the move.
+     *
+     * @return TRUE iff all the squares between the start
+     * and end are empty or all but the last are empty
+     * and the last is the opposite color.
+     * */
+    private boolean checkAllSteps(Move mv, int dir) {
+        Square sq = mv.getFrom().moveDest(dir, 1);
+        while (sq != mv.getTo()) {
+            if (get(sq) != null) {
+                return false;
+            }
+            sq = sq.moveDest(dir, 1);
+        }
+        return get(mv.getTo()) == null || get(mv.getTo()).getColor() != get(mv.getFrom()).getColor();
+    }
+
+    /**
      * TRUE iff MV is a possible bishop move.
      *
      * @param mv Move to check.
@@ -258,14 +361,7 @@ public class Board {
         if (dir != 1 && dir != 3 && dir != 5 && dir != 7) {
             return false;
         }
-        Square sq = mv.getFrom().moveDest(dir, 1);
-        while (sq != mv.getTo()) {
-            if (get(sq) != null) {
-                return false;
-            }
-            sq = sq.moveDest(dir, 1);
-        }
-        return get(mv.getTo()) == null || get(mv.getTo()).getColor() != get(mv.getFrom()).getColor();
+        return checkAllSteps(mv, dir);
     }
 
     /**
@@ -329,14 +425,7 @@ public class Board {
         if (dir == -1) {
             return false;
         }
-        Square sq = mv.getFrom().moveDest(dir, 1);
-        while (sq != mv.getTo()) {
-            if (get(sq) != null) {
-                return false;
-            }
-            sq = sq.moveDest(dir, 1);
-        }
-        return get(mv.getTo()) == null || get(mv.getTo()).getColor() != get(mv.getFrom()).getColor();
+        return checkAllSteps(mv, dir);
     }
 
     /**
@@ -350,14 +439,7 @@ public class Board {
         if (dir != 0 && dir != 2 && dir != 4 && dir != 6) {
             return false;
         }
-        Square sq = mv.getFrom().moveDest(dir, 1);
-        while (sq != mv.getTo()) {
-            if (get(sq) != null) {
-                return false;
-            }
-            sq = sq.moveDest(dir, 1);
-        }
-        return get(mv.getTo()) == null || get(mv.getTo()).getColor() != get(mv.getFrom()).getColor();
+        return checkAllSteps(mv, dir);
     }
 
     /**
@@ -548,5 +630,54 @@ public class Board {
     /**
      * Board history.
      */
-    private final List<Move> _movesMade = new ArrayList<>();
+    private final List<MovePair> _movesMade = new ArrayList<>();
+}
+
+/**
+ * Wrapper class for storing a move and
+ * the corresponding piece that made the
+ * move.
+ *
+ * @author Richard Hu
+ */
+class MovePair {
+
+    /**
+     * Default constructor.
+     *
+     * @param mv Move.
+     * @param moving Moving piece.
+     */
+    MovePair(Move mv, char moving) {
+        _mv = mv;
+        _moving = moving;
+    }
+
+    /**
+     * Returns move.
+     *
+     * @return _mv.
+     */
+    Move mv() {
+        return _mv;
+    }
+
+    /**
+     * Returns moving piece.
+     *
+     * @return _moving.
+     */
+    char moving() {
+        return _moving;
+    }
+
+    /**
+     * Move.
+     */
+    private Move _mv;
+
+    /**
+     * Moving piece.
+     */
+    private char _moving;
 }

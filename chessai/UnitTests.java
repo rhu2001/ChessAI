@@ -5,6 +5,7 @@ import static org.junit.Assert.*;
 
 import static chessai.Square.*;
 import static chessai.Move.*;
+import static chessai.Color.*;
 
 /**
  * Unit tests.
@@ -15,8 +16,8 @@ public class UnitTests {
 
     @Test
     public void squareEqualityTests() {
-        assertTrue(sq("a1") == sq("a1"));
-        assertFalse(sq("a1") == sq("a2"));
+        assertSame(sq("a1"), sq("a1"));
+        assertNotSame(sq("a1"), sq("a2"));
     }
 
     @Test
@@ -62,18 +63,47 @@ public class UnitTests {
     }
 
     @Test
+    public void configurationTests() {
+        Board b = new Board();
+        System.out.println(b);
+
+        b.initialize(new String[][] {
+                {"wp"},
+                {null, "wp"},
+                {null, null, "wp"},
+                {null, null, null, "wp"},
+                {null, null, null, null, "wp"},
+                {null, null, null, null, null, "wp"},
+                {null, null, null, null, null, null, "wp"},
+                {null, null, null, null, null, null, null, "wp"}
+        }, WHITE);
+        assertEquals(b.get(sq(0, 0)).abbr(), '\0');
+        assertEquals(b.get(sq(1, 1)).abbr(), '\0');
+        assertEquals(b.get(sq(2, 2)).abbr(), '\0');
+        assertEquals(b.get(sq(3, 3)).abbr(), '\0');
+        assertEquals(b.get(sq(4, 4)).abbr(), '\0');
+        assertEquals(b.get(sq(5, 5)).abbr(), '\0');
+        assertEquals(b.get(sq(6, 6)).abbr(), '\0');
+        assertEquals(b.get(sq(7, 7)).abbr(), '\0');
+
+        assertNull(b.get(sq(0, 1)));
+
+        b = new Board(null, WHITE);
+        assertNull(b.get(sq("a1")));
+        assertNull(b.get(sq("b2")));
+    }
+
+    @Test
     public void moveEqualityTests() {
-        assertTrue(mv("a1-a2", 'N') == mv("a1-a2", 'N'));
-        assertFalse(mv("a1-a2", 'N') == mv("a1-a2", '\0'));
-        assertFalse(mv("a1-a3", 'N') == mv("a1-a2", 'N'));
-        assertFalse(mv("a1-a3", 'N') == mv("a1-a2", 'K'));
+        assertSame(mv("a1-a2", 'N'), mv("a1-a2", 'N'));
+        assertNotSame(mv("a1-a2", 'N'), mv("a1-a2", '\0'));
+        assertNotSame(mv("a1-a3", 'N'), mv("a1-a2", 'N'));
+        assertNotSame(mv("a1-a3", 'N'), mv("a1-a2", 'K'));
     }
 
     @Test
     public void moveLegalityTests() {
         Board b = new Board();
-
-        System.out.println(b);
 
         /*
          * White moves
@@ -145,7 +175,7 @@ public class UnitTests {
         assertTrue(b.isPossible(mv("d7-d5")));
         assertTrue(b.isPossible(mv("g8-f6")));
 
-        b.makeMove(mv("e2-e3"), null);
+        b.makeMove(mv("e2-e3"));
         System.out.println(b);
         System.out.println(b.getPieces(Color.WHITE));
         System.out.println(b.getPieces(Color.BLACK));
@@ -168,50 +198,152 @@ public class UnitTests {
         /* Illegal castles. */
         assertFalse(b.isLegal(mv("e8-c8")));
         assertFalse(b.isLegal(mv("e8-g8")));
+    }
 
-        b.makeMove(mv("d7-d5"), null);
-        System.out.println(b);
-        System.out.println(b.getPieces(Color.WHITE));
-        System.out.println(b.getPieces(Color.BLACK));
+    @Test
+    public void undoTests() {
+        Board b = new Board();
 
-        b.makeMove(mv("g1-f3"), null);
-        System.out.println(b);
-        System.out.println(b.getPieces(Color.WHITE));
-        System.out.println(b.getPieces(Color.BLACK));
+        /*
+         * Tests basic undoing.
+         */
 
-        b.makeMove(mv("b8-c6"), null);
-        System.out.println(b);
-        System.out.println(b.getPieces(Color.WHITE));
-        System.out.println(b.getPieces(Color.BLACK));
+        b.makeMove(mv("e2-e4"));
+        b.makeMove(mv("e7-e5"));
 
-        b.makeMove(mv("f1-d3"), null);
         System.out.println(b);
-        System.out.println(b.getPieces(Color.WHITE));
-        System.out.println(b.getPieces(Color.BLACK));
 
-        b.makeMove(mv("c8-e6"), null);
-        System.out.println(b);
-        System.out.println(b.getPieces(Color.WHITE));
-        System.out.println(b.getPieces(Color.BLACK));
+        b.undo();
+        b.undo();
 
-        b.makeMove(mv("e1-g1"), null);
         System.out.println(b);
-        System.out.println(b.getPieces(Color.WHITE));
-        System.out.println(b.getPieces(Color.BLACK));
+        System.out.println(b.getPieces(WHITE));
+        System.out.println(b.getPieces(BLACK));
 
-        b.makeMove(mv("d8-d7"), null);
-        System.out.println(b);
-        System.out.println(b.getPieces(Color.WHITE));
-        System.out.println(b.getPieces(Color.BLACK));
+        /*
+         * Tests undoing with captures.
+         */
 
-        b.makeMove(mv("b1-c3"), null);
-        System.out.println(b);
-        System.out.println(b.getPieces(Color.WHITE));
-        System.out.println(b.getPieces(Color.BLACK));
+        b.initialize(new String[][] {
+                {"wq", "bp"},
+                {"bq", "wp"},
+                {},
+                {},
+                {},
+                {},
+                {},
+                {}
+        }, WHITE);
 
-        b.makeMove(mv("e8-c8"), null);
+        assertEquals(b.get(sq(0, 0)).abbr(), 'Q');
+        assertEquals(b.get(sq(0, 0)).getColor(), WHITE);
+
+        assertEquals(b.get(sq(1, 0)).abbr(), '\0');
+        assertEquals(b.get(sq(1, 0)).getColor(), BLACK);
+
+        assertEquals(b.get(sq(0, 1)).abbr(), 'Q');
+        assertEquals(b.get(sq(0, 1)).getColor(), BLACK);
+
+        assertEquals(b.get(sq(1, 1)).abbr(), '\0');
+        assertEquals(b.get(sq(1, 1)).getColor(), WHITE);
+
+        b.makeMove(mv(sq(0, 0), sq(1, 0)));
+        b.makeMove(mv(sq(0, 1), sq(1, 1)));
+        b.makeMove(mv(sq(1, 0), sq(1, 1)));
+
+        assertNull(b.get(sq(0, 0)));
+        assertNull(b.get(sq(1, 0)));
+        assertNull(b.get(sq(0, 1)));
+
+        assertEquals(b.get(sq(1, 1)).abbr(), 'Q');
+        assertEquals(b.get(sq(1, 1)).getColor(), WHITE);
+
+        b.undo();
+        b.undo();
+        b.undo();
+
+        assertEquals(b.get(sq(0, 0)).abbr(), 'Q');
+        assertEquals(b.get(sq(0, 0)).getColor(), WHITE);
+
+        assertEquals(b.get(sq(1, 0)).abbr(), '\0');
+        assertEquals(b.get(sq(1, 0)).getColor(), BLACK);
+
+        assertEquals(b.get(sq(0, 1)).abbr(), 'Q');
+        assertEquals(b.get(sq(0, 1)).getColor(), BLACK);
+
+        assertEquals(b.get(sq(1, 1)).abbr(), '\0');
+        assertEquals(b.get(sq(1, 1)).getColor(), WHITE);
+
+        /*
+         * Tests undoing with promotions and captures.
+         */
+
+        b.initialize(new String[][] {
+                {null, "wn"},
+                {"bp", "wq"},
+                {},
+                {},
+                {},
+                {},
+                {null, "wp"},
+                {"br", null}
+        }, BLACK);
+
+        assertEquals(b.get(sq(1, 0)).abbr(), 'N');
+        assertEquals(b.get(sq(1, 0)).getColor(), WHITE);
+
+        assertEquals(b.get(sq(0, 1)).abbr(), '\0');
+        assertEquals(b.get(sq(0, 1)).getColor(), BLACK);
+
+        assertEquals(b.get(sq(1, 1)).abbr(), 'Q');
+        assertEquals(b.get(sq(1, 1)).getColor(), WHITE);
+
+        assertEquals(b.get(sq(1, 6)).abbr(), '\0');
+        assertEquals(b.get(sq(1, 6)).getColor(), WHITE);
+
+        assertEquals(b.get(sq(0, 7)).abbr(), 'R');
+        assertEquals(b.get(sq(0, 7)).getColor(), BLACK);
+
+        assertNull(b.get(sq(1, 7)));
+
         System.out.println(b);
-        System.out.println(b.getPieces(Color.WHITE));
-        System.out.println(b.getPieces(Color.BLACK));
+        System.out.println(b.getPieces(WHITE));
+        System.out.println(b.getPieces(BLACK));
+        b.makeMove(mv(sq(0, 1), sq(1, 0)), 'q');
+
+        assertEquals(b.get(sq(1, 0)).abbr(), 'Q');
+        assertEquals(b.get(sq(1, 0)).getColor(), BLACK);
+
+        System.out.println(b);
+
+        b.makeMove(mv("b7-b8"), 'R');
+        b.makeMove(mv("a8-b8"));
+        b.makeMove(mv("b2-a2"));
+
+        b.undo();
+        b.undo();
+        b.undo();
+        b.undo();
+
+        System.out.println(b);
+        System.out.println(b.getPieces(WHITE));
+        System.out.println(b.getPieces(BLACK));
+
+        assertEquals(b.get(sq(1, 0)).abbr(), 'N');
+        assertEquals(b.get(sq(1, 0)).getColor(), WHITE);
+
+        assertEquals(b.get(sq(0, 1)).abbr(), '\0');
+        assertEquals(b.get(sq(0, 1)).getColor(), BLACK);
+
+        assertEquals(b.get(sq(1, 1)).abbr(), 'Q');
+        assertEquals(b.get(sq(1, 1)).getColor(), WHITE);
+
+        assertEquals(b.get(sq(1, 6)).abbr(), '\0');
+        assertEquals(b.get(sq(1, 6)).getColor(), WHITE);
+
+        assertEquals(b.get(sq(0, 7)).abbr(), 'R');
+        assertEquals(b.get(sq(0, 7)).getColor(), BLACK);
+
+        assertNull(b.get(sq(1, 7)));
     }
 }

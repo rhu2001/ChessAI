@@ -112,9 +112,8 @@ public class Move {
         _captured = captured;
         _isCastle = isCastle;
 
-        _possiblePromotion = from.col() == to.col()
-                && ((from.row() == 6 && to.row() == 7)
-                || (from.row() == 1 && to.row() == 0));
+        _possiblePromotion = (from.row() == 1 && to.row() == 0)
+                || (from.row() == 6 && to.row() == 7);
     }
 
     /**
@@ -179,7 +178,7 @@ public class Move {
      * @return The capture move.
      */
     Move capture(char c) {
-        if (_captured != NO_CAPTURE) {
+        if (_captured == NO_CAPTURE) {
             return findMove(c, _from, _to);
         } else {
             throw new IllegalStateException("This move is already a capture.");
