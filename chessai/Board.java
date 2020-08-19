@@ -168,7 +168,7 @@ public class Board {
         if (piece != null && !hasPiece(piece)) {
             addPiece(piece);
         }
-        if (piece instanceof King) {
+        if (piece.abbr() == King.ABBR) {
             updateKingSquare(sq, piece.getColor());
         }
         _board[sq.index()] = piece;
@@ -212,7 +212,7 @@ public class Board {
             _movesMade.add(new MovePair(mv, get(mv.getFrom()).abbr()));
         }
 
-        if (get(mv.getFrom()) instanceof King && mv.isCastle()) {
+        if (get(mv.getFrom()).abbr() == King.ABBR && mv.isCastle()) {
             List<Piece> pieces = getCastlePieces(mv);
 
             Piece king = pieces.get(0);
@@ -228,7 +228,7 @@ public class Board {
             set(rook.getLocation(), null);
             rook.moveTo(king.getLocation().moveDest(dir, 1));
             set(rook.getLocation(), rook);
-        } else if (get(mv.getFrom()) instanceof Pawn && mv.isPossiblePromotion()) {
+        } else if (get(mv.getFrom()).abbr() == Pawn.ABBR && mv.isPossiblePromotion()) {
             set(mv.getFrom(), null);
             set(mv.getTo(), generatePiece(promotion, _turn, mv.getTo()));
         } else {
@@ -308,7 +308,7 @@ public class Board {
         Piece king = pieces.get(0);
         Piece rook = pieces.get(1);
 
-        if (!(king instanceof King && rook instanceof Rook)
+        if (!(king.abbr() == King.ABBR && rook.abbr() == Rook.ABBR)
                 || (king.hasMoved() || rook.hasMoved())) {
             return false;
         }
@@ -452,7 +452,7 @@ public class Board {
      */
     boolean inCheck(Square sq, Color color) {
         for (Piece piece : getPieces(color.opposite())) {
-            if (isLegal(mv(piece.getLocation(), sq))) {
+            if (isPossible(mv(piece.getLocation(), sq))) {
                 return true;
             }
         }
@@ -471,6 +471,240 @@ public class Board {
             case BLACK -> inCheck(getKingSquare(BLACK), color);
             default -> throw new IllegalStateException("Piece color must be WHITE or BLACK.");
         };
+    }
+
+    /**
+     * Returns a HashSet of all possible
+     * moves on the current board for a
+     * given color.
+     *
+     * @param color Color to return moves
+     *              for.
+     * @return HashSet containing all possible
+     * moves for COLOR.
+     */
+    HashSet<Move> possibleMoves(Color color) {
+        if (color == WHITE) {
+            return possibleWhiteMoves();
+        } else if (color == BLACK) {
+            return possibleBlackMoves();
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * Returns a HashSet of all possible white
+     * moves on the current board. If the HashSet is
+     * not up-to-date, it is created from scratch and
+     * marked as being up-to-date. Otherwise, the
+     * up-to-date version is returned.
+     *
+     * @return HashSet containing all possible white
+     * moves.
+     */
+    HashSet<Move> possibleWhiteMoves() {
+        if (!_possibleWhiteMovesUpdated) {
+            _possibleWhiteMoves.clear();
+            for (Piece piece : getPieces(WHITE)) {
+                _possibleWhiteMoves.addAll(piecePossibleMoves(piece));
+            }
+            _possibleWhiteMovesUpdated = true;
+        }
+        return _possibleWhiteMoves;
+    }
+
+    /**
+     * Returns a HashSet of all possible wlack
+     * moves on the current board. If the HashSet is
+     * not up-to-date, it is created from scratch and
+     * marked as being up-to-date. Otherwise, the
+     * up-to-date version is returned.
+     *
+     * @return HashSet containing all possible black
+     * moves.
+     */
+    HashSet<Move> possibleBlackMoves() {
+        if (!_possibleBlackMovesUpdated) {
+            _possibleBlackMoves.clear();
+            for (Piece piece : getPieces(BLACK)) {
+                _possibleBlackMoves.addAll(piecePossibleMoves(piece));
+            }
+            _possibleBlackMovesUpdated = true;
+        }
+        return _possibleBlackMoves;
+    }
+
+    /**
+     * Finds all possible moves of a piece.
+     *
+     * @param piece Piece to check.
+     * @return HashSet containing all possible
+     * moves of PIECE.
+     */
+    HashSet<Move> piecePossibleMoves(Piece piece) {
+        if (piece == null) {
+            return null;
+        }
+        return switch (piece.abbr()) {
+            case Bishop.ABBR -> bishopPossibleMoves(piece);
+            case King.ABBR -> kingPossibleMoves(piece);
+            case Knight.ABBR -> knightPossibleMoves(piece);
+            case Pawn.ABBR -> pawnPossibleMoves(piece);
+            case Queen.ABBR -> queenPossibleMoves(piece);
+            case Rook.ABBR -> rookPossibleMoves(piece);
+            default -> null;
+        };
+    }
+
+    /**
+     * Finds all possible moves of a Bishop.
+     *
+     * @param bishop Bishop to check.
+     * @return HashSet containing all possible
+     * moves of BISHOP.
+     */
+    HashSet<Move> bishopPossibleMoves(Piece bishop) {
+        HashSet<Move> moves = new HashSet<>();
+        ArrayList<Square> squares = new ArrayList<>();
+        squares.add(bishop.getLocation().moveDest(1, 1));
+        squares.add(bishop.getLocation().moveDest(3, 1));
+        squares.add(bishop.getLocation().moveDest(5, 1));
+        squares.add(bishop.getLocation().moveDest(7, 1));
+        while (squaresNotNull(squares)) {
+            for (int i = 0; i < squares.size(); i++) {
+                if (squares.get(i) != null) {
+                    if (isPossible(mv(bishop.getLocation(), squares.get(i)))) {
+                        moves.add(mv(bishop.getLocation(), squares.get(i)));
+                        squares.set(i, squares.get(i).moveDest(2 * i + 1, 1));
+                    } else {
+                        squares.set(i, null);
+                    }
+                }
+            }
+        }
+        return moves;
+    }
+
+    /**
+     * Finds all possible moves of a King.
+     *
+     * @param king King to check.
+     * @return HashSet containing all possible
+     * moves of KING.
+     */
+    HashSet<Move> kingPossibleMoves(Piece king) {
+        HashSet<Move> moves = new HashSet<>();
+        Square sq = king.getLocation();
+        for (int dir = 0; dir < 8; dir++) {
+            if (sq.moveDest(dir, 1) != null
+                    && isPossible(mv(sq, sq.moveDest(dir, 1)))) {
+                moves.add(mv(sq, sq.moveDest(dir, 1)));
+            }
+        }
+        return moves;
+    }
+
+    /**
+     * Finds all possible moves of a Knight.
+     *
+     * @param knight Knight to check.
+     * @return HashSet containing all possible
+     * moves of KNIGHT.
+     */
+    HashSet<Move> knightPossibleMoves(Piece knight) {
+        HashSet<Move> moves = new HashSet<>();
+        Square sq = knight.getLocation();
+        for (int first : new int[] {-2, -1, 1, 2}) {
+            for (int second : new int[] {-2, -1, 1, 2}) {
+                if (Math.abs(first) != Math.abs(second)) {
+                    Square dest = sq(sq.col() + first, sq.row() + second);
+                    if (dest != null && isPossible(mv(sq, dest))) {
+                        moves.add(mv(sq, dest));
+                    }
+                }
+            }
+        }
+        return moves;
+    }
+
+    /**
+     * Finds all possible moves of a Pawn.
+     *
+     * @param pawn Pawn to check.
+     * @return HashSet containing all possible
+     * moves of PAWN.
+     */
+    HashSet<Move> pawnPossibleMoves(Piece pawn) {
+        HashSet<Move> moves = new HashSet<>();
+        int adjust = 4 * (pawn.getColor() == BLACK ? 1 : 0);
+        for (int i = (7 + adjust) % 8; i <= (1 + adjust) % 8; i = (i + 1) % 8) {
+            if (pawn.getLocation().moveDest(i, 1) != null
+                    && isPossible(mv(pawn.getLocation(), pawn.getLocation().moveDest(i, 1)))) {
+                moves.add(mv(pawn.getLocation(), pawn.getLocation().moveDest(i, 1)));
+            }
+        }
+        return moves;
+    }
+
+    /**
+     * Finds all possible moves of a Queen.
+     *
+     * @param queen Queen to check.
+     * @return HashSet containing all possible
+     * moves of QUEEN.
+     */
+    HashSet<Move> queenPossibleMoves(Piece queen) {
+        HashSet<Move> moves = new HashSet<>();
+        moves.addAll(bishopPossibleMoves(queen));
+        moves.addAll(rookPossibleMoves(queen));
+        return moves;
+    }
+
+    /**
+     * Finds all possible moves of a Rook.
+     *
+     * @param rook Rook to check.
+     * @return HashSet containing all possible
+     * moves of ROOK.
+     */
+    HashSet<Move> rookPossibleMoves(Piece rook) {
+        HashSet<Move> moves = new HashSet<>();
+        ArrayList<Square> squares = new ArrayList<>();
+        squares.add(rook.getLocation().moveDest(0, 1));
+        squares.add(rook.getLocation().moveDest(2, 1));
+        squares.add(rook.getLocation().moveDest(4, 1));
+        squares.add(rook.getLocation().moveDest(6, 1));
+        while (squaresNotNull(squares)) {
+            for (int i = 0; i < squares.size(); i++) {
+                if (squares.get(i) != null) {
+                    if (isPossible(mv(rook.getLocation(), squares.get(i)))) {
+                        moves.add(mv(rook.getLocation(), squares.get(i)));
+                        squares.set(i, squares.get(i).moveDest(2 * i, 1));
+                    } else {
+                        squares.set(i, null);
+                    }
+                }
+            }
+        }
+        return moves;
+    }
+
+    /**
+     * Checks whether any square in a List
+     * of squares is NULL.
+     *
+     * @param squares List of squares to check.
+     * @return TRUE if at least one SQUARE in
+     * the List is not NULL.
+     */
+    boolean squaresNotNull(List<Square> squares) {
+        for (Square sq : squares) {
+            if (sq != null) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -616,6 +850,19 @@ public class Board {
      */
     final HashSet<Piece> _whitePieces = new HashSet<>(32),
             _blackPieces = new HashSet<>(32);
+
+    /**
+     * Sets of all possible moves on the current
+     * board.
+     */
+    final HashSet<Move> _possibleWhiteMoves = new HashSet<>(),
+            _possibleBlackMoves = new HashSet<>();
+
+    /**
+     * TRUE iff possible moves sets are up-to-date.
+     */
+    boolean _possibleWhiteMovesUpdated = false,
+            _possibleBlackMovesUpdated = false;
 
     /**
      * Locations of the kings.

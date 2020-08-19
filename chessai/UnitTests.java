@@ -346,4 +346,71 @@ public class UnitTests {
 
         assertNull(b.get(sq(1, 7)));
     }
+
+    @Test
+    public void checkTests() {
+
+        /*
+         * Default starting board. Neither king
+         * should be in check.
+         */
+        Board b = new Board();
+
+        assertFalse(b.inCheck(WHITE));
+        assertFalse(b.inCheck(BLACK));
+
+        /*
+         * Black Rook puts white King in check and
+         * white Pawn puts black King in check.
+         */
+        b.initialize(new String[][] {
+                {"wk", "br"},
+                {},
+                {},
+                {},
+                {},
+                {},
+                {null, "wp"},
+                {"bk"}
+        }, WHITE);
+
+        assertTrue(b.inCheck(WHITE));
+        assertTrue(b.inCheck(BLACK));
+
+        /*
+         * Black Knight puts white King in check.
+         * Black King not in check.
+         */
+        b.initialize(new String[][] {
+                {null, "wk"},
+                {},
+                {"bn"},
+                {},
+                {},
+                {},
+                {},
+                {"bk"}
+        }, WHITE);
+
+        assertTrue(b.inCheck(WHITE));
+        assertFalse(b.inCheck(BLACK));
+
+        /*
+         * White Bishop puts black King in check.
+         * White King not in check.
+         */
+        b.initialize(new String[][] {
+                {null, "wk"},
+                {"wb"},
+                {},
+                {},
+                {},
+                {},
+                {},
+                {null, null, null, null, null, null, "bk"}
+        }, WHITE);
+
+        assertFalse(b.inCheck(WHITE));
+        assertTrue(b.inCheck(BLACK));
+    }
 }
