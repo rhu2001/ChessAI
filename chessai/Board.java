@@ -109,6 +109,13 @@ public class Board {
         this.clear();
         _whitePieces.clear();
         _blackPieces.clear();
+
+        _possibleWhiteMoves.clear();
+        _possibleBlackMoves.clear();
+
+        _possibleWhiteMovesUpdated = false;
+        _possibleBlackMovesUpdated = false;
+
         if (layout != null) {
             for (int r = 0; r < layout.length; r++) {
                 for (int c = 0; c < layout.length; c++) {
@@ -162,13 +169,16 @@ public class Board {
      * @param next The color of the next turn.
      */
     void set(Square sq, Piece piece, Color next) {
+        _possibleWhiteMovesUpdated = false;
+        _possibleBlackMovesUpdated = false;
+
         if (get(sq) != null) {
             removePiece(get(sq));
         }
         if (piece != null && !hasPiece(piece)) {
             addPiece(piece);
         }
-        if (piece.abbr() == King.ABBR) {
+        if (piece != null && piece.abbr() == King.ABBR) {
             updateKingSquare(sq, piece.getColor());
         }
         _board[sq.index()] = piece;
@@ -262,6 +272,15 @@ public class Board {
         return true;
     }
 
+    /**
+     * Checks if a move is legal on the current
+     * board.
+     *
+     * @param mv Move to check.
+     * @return TRUE iff MV is possible on the
+     * current board and the color making the
+     * move is the same as _turn.
+     */
     boolean isLegal(Move mv) {
         return isPossible(mv) && get(mv.getFrom()).getColor() == _turn;
     }
@@ -279,6 +298,10 @@ public class Board {
             return false;
         }
 
+        if (possibleMovesUpdated(get(mv.getFrom()).getColor())) {
+            return possibleMoves(get(mv.getFrom()).getColor()).contains(mv);
+        }
+
         if (mv.isCastle()) {
             return isPossibleCastle(mv);
         }
@@ -293,6 +316,8 @@ public class Board {
             default -> false;
         };
     }
+
+    //TODO Implement better check and checkmate conditions
 
     /**
      * TRUE iff MV is a possible castle move.
@@ -474,6 +499,22 @@ public class Board {
     }
 
     /**
+     * Checks if a color has its possible moves
+     * HashSet updated.
+     *
+     * @param color Color to check.
+     * @return TRUE iff COLOR's possible moves
+     * are up-to-date.
+     */
+    boolean possibleMovesUpdated(Color color) {
+        return switch (color) {
+            case WHITE -> _possibleWhiteMovesUpdated;
+            case BLACK -> _possibleBlackMovesUpdated;
+            default -> false;
+        };
+    }
+
+    /**
      * Returns a HashSet of all possible
      * moves on the current board for a
      * given color.
@@ -602,6 +643,23 @@ public class Board {
                 moves.add(mv(sq, sq.moveDest(dir, 1)));
             }
         }
+        if (!king.hasMoved()) {
+            if (sq == sq("e1")) {
+                if (isPossible(mv("e1-c1"))) {
+                    moves.add(mv("e1-c1"));
+                }
+                if (isPossible(mv("e1-g1"))) {
+                    moves.add(mv("e1-g1"));
+                }
+            } else {
+                if (isPossible(mv("e8-c8"))) {
+                    moves.add(mv("e8-c8"));
+                }
+                if (isPossible(mv("e8-g8"))) {
+                    moves.add(mv("e8-g8"));
+                }
+            }
+        }
         return moves;
     }
 
@@ -618,9 +676,9 @@ public class Board {
         for (int first : new int[] {-2, -1, 1, 2}) {
             for (int second : new int[] {-2, -1, 1, 2}) {
                 if (Math.abs(first) != Math.abs(second)) {
-                    Square dest = sq(sq.col() + first, sq.row() + second);
-                    if (dest != null && isPossible(mv(sq, dest))) {
-                        moves.add(mv(sq, dest));
+                    if (exists(sq.col() + first, sq.row() + second)
+                            && isPossible(mv(sq, sq(sq.col() + first, sq.row() + second)))) {
+                        moves.add(mv(sq, sq(sq.col() + first, sq.row() + second)));
                     }
                 }
             }
@@ -637,11 +695,18 @@ public class Board {
      */
     HashSet<Move> pawnPossibleMoves(Piece pawn) {
         HashSet<Move> moves = new HashSet<>();
+        Square dest;
         int adjust = 4 * (pawn.getColor() == BLACK ? 1 : 0);
-        for (int i = (7 + adjust) % 8; i <= (1 + adjust) % 8; i = (i + 1) % 8) {
-            if (pawn.getLocation().moveDest(i, 1) != null
-                    && isPossible(mv(pawn.getLocation(), pawn.getLocation().moveDest(i, 1)))) {
-                moves.add(mv(pawn.getLocation(), pawn.getLocation().moveDest(i, 1)));
+        for (int i = 7 + adjust; i <= 8 + 1 + adjust; i++) {
+            int dir = i % 8;
+            dest = pawn.getLocation().moveDest(dir, 1);
+            if (dest != null && isPossible(mv(pawn.getLocation(), dest))) {
+                moves.add(mv(pawn.getLocation(), dest));
+                dest = pawn.getLocation().moveDest(dir, 2);
+                if ((dir == 0 || dir == 4)
+                        && isPossible(mv(pawn.getLocation(), dest))) {
+                    moves.add(mv(pawn.getLocation(), dest));
+                }
             }
         }
         return moves;

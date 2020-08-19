@@ -413,4 +413,108 @@ public class UnitTests {
         assertFalse(b.inCheck(WHITE));
         assertTrue(b.inCheck(BLACK));
     }
+
+    @Test
+    public void possibleMovesTests() {
+        Board b = new Board();
+        assertFalse(b.possibleMovesUpdated(WHITE));
+        assertFalse(b.possibleMovesUpdated(BLACK));
+
+        System.out.println(b);
+        System.out.println(b.getPieces(WHITE));
+        System.out.println(b.getPieces(BLACK));
+
+        /*
+         * All possible white Pawn moves.
+         */
+        assertTrue(b.possibleMoves(WHITE).contains(mv("a2-a3")));
+        assertTrue(b.possibleMoves(WHITE).contains(mv("a2-a4")));
+        assertTrue(b.possibleMoves(WHITE).contains(mv("b2-b3")));
+        assertTrue(b.possibleMoves(WHITE).contains(mv("b2-b4")));
+        assertTrue(b.possibleMoves(WHITE).contains(mv("c2-c3")));
+        assertTrue(b.possibleMoves(WHITE).contains(mv("c2-c4")));
+        assertTrue(b.possibleMoves(WHITE).contains(mv("d2-d3")));
+        assertTrue(b.possibleMoves(WHITE).contains(mv("d2-d4")));
+        assertTrue(b.possibleMoves(WHITE).contains(mv("e2-e3")));
+        assertTrue(b.possibleMoves(WHITE).contains(mv("e2-e4")));
+        assertTrue(b.possibleMoves(WHITE).contains(mv("f2-f3")));
+        assertTrue(b.possibleMoves(WHITE).contains(mv("f2-f4")));
+        assertTrue(b.possibleMoves(WHITE).contains(mv("g2-g3")));
+        assertTrue(b.possibleMoves(WHITE).contains(mv("g2-g4")));
+        assertTrue(b.possibleMoves(WHITE).contains(mv("h2-h3")));
+        assertTrue(b.possibleMoves(WHITE).contains(mv("h2-h4")));
+
+        /*
+         * All possible white Knight moves.
+         */
+        assertTrue(b.possibleMoves(WHITE).contains(mv("b1-a3")));
+        assertTrue(b.possibleMoves(WHITE).contains(mv("b1-c3")));
+        assertTrue(b.possibleMoves(WHITE).contains(mv("g1-f3")));
+        assertTrue(b.possibleMoves(WHITE).contains(mv("g1-h3")));
+
+        /*
+         * All possible black Pawn moves.
+         */
+        assertTrue(b.possibleMoves(BLACK).contains(mv("a7-a6")));
+        assertTrue(b.possibleMoves(BLACK).contains(mv("a7-a5")));
+        assertTrue(b.possibleMoves(BLACK).contains(mv("b7-b6")));
+        assertTrue(b.possibleMoves(BLACK).contains(mv("b7-b5")));
+        assertTrue(b.possibleMoves(BLACK).contains(mv("c7-c6")));
+        assertTrue(b.possibleMoves(BLACK).contains(mv("c7-c5")));
+        assertTrue(b.possibleMoves(BLACK).contains(mv("d7-d6")));
+        assertTrue(b.possibleMoves(BLACK).contains(mv("d7-d5")));
+        assertTrue(b.possibleMoves(BLACK).contains(mv("e7-e6")));
+        assertTrue(b.possibleMoves(BLACK).contains(mv("e7-e5")));
+        assertTrue(b.possibleMoves(BLACK).contains(mv("f7-f6")));
+        assertTrue(b.possibleMoves(BLACK).contains(mv("f7-f5")));
+        assertTrue(b.possibleMoves(BLACK).contains(mv("g7-g6")));
+        assertTrue(b.possibleMoves(BLACK).contains(mv("g7-g5")));
+        assertTrue(b.possibleMoves(BLACK).contains(mv("h7-h6")));
+        assertTrue(b.possibleMoves(BLACK).contains(mv("h7-h5")));
+
+        /*
+         * All possible black Knight moves.
+         */
+        assertTrue(b.possibleMoves(BLACK).contains(mv("b8-a6")));
+        assertTrue(b.possibleMoves(BLACK).contains(mv("b8-c6")));
+        assertTrue(b.possibleMoves(BLACK).contains(mv("g8-f6")));
+        assertTrue(b.possibleMoves(BLACK).contains(mv("g8-h6")));
+
+        assertTrue(b.possibleMovesUpdated(WHITE));
+        assertTrue(b.possibleMovesUpdated(BLACK));
+
+        assertEquals(20, b.possibleMoves(WHITE).size());
+        assertEquals(20, b.possibleMoves(BLACK).size());
+
+        b.makeMove(mv("d2-d4"));
+        assertFalse(b.possibleMovesUpdated(WHITE));
+        assertFalse(b.possibleMovesUpdated(BLACK));
+
+        assertTrue(b.possibleMoves(WHITE).contains(mv("d4-d5")));
+        assertTrue(b.possibleMoves(BLACK).contains(mv("a7-a6")));
+
+        b.undo();
+        assertFalse(b.possibleMovesUpdated(WHITE));
+        assertFalse(b.possibleMovesUpdated(BLACK));
+
+        b.initialize(new String[][] {
+                {"bk"},
+                {null, null, null, "wn"},
+                {},
+                {null, "wn"},
+                {},
+                {},
+                {},
+                {null, null, null, null, null, null, null, "wb"}
+        }, WHITE);
+        assertFalse(b.possibleMovesUpdated(WHITE));
+        assertFalse(b.possibleMovesUpdated(BLACK));
+
+        System.out.println(b);
+        System.out.println(b.getPieces(WHITE));
+        System.out.println(b.getPieces(BLACK));
+
+        System.out.println(b.possibleMoves(BLACK));
+        assertTrue(b.possibleMoves(BLACK).isEmpty());
+    }
 }
