@@ -147,6 +147,7 @@ public class Board {
      */
     void clear() {
         Arrays.fill(_board, null);
+        Arrays.fill(_kingSquares, null);
     }
 
     /**
@@ -160,9 +161,7 @@ public class Board {
 
     /**
      * Sets the square SQ to PIECE. If NEXT is
-     * not null, sets the turn to NEXT. If
-     * PROMOTION is not null and a promotion is valid,
-     * the pawn is promoted to it.
+     * not null, sets the turn to NEXT.
      *
      * @param sq Square to set.
      * @param piece Piece to set SQ to.
@@ -196,6 +195,41 @@ public class Board {
      */
     void set(Square sq, Piece piece) {
         set(sq, piece, null);
+    }
+
+    /**
+     * Sets the square SQ to PIECE and sets
+     * the moving color to NEXT. PIECE is not
+     * tracked by the HashSets containing the
+     * pieces of each color. Primarily used
+     * for checking removal from check state.
+     *
+     * @param sq Square to set.
+     * @param piece Piece to set SQ to.
+     * @param next The color of the next turn.
+     */
+    void setUntracked(Square sq, Piece piece, Color next) {
+        _board[sq.index()] = piece;
+
+        if (piece != null && piece.abbr() == King.ABBR) {
+            updateKingSquare(sq, piece.getColor());
+        }
+
+        if (next != null) {
+            _turn = next;
+        }
+    }
+
+    /**
+     * Sets the square SQ to PIECE. PIECE is not
+     * tracked by the HashSets containing the
+     * pieces of each color.
+     *
+     * @param sq Square set.
+     * @param piece Piece to set SQ to.
+     */
+    void setUntracked(Square sq, Piece piece) {
+        setUntracked(sq, piece, null);
     }
 
     /**
@@ -306,6 +340,24 @@ public class Board {
             return isPossibleCastle(mv);
         }
 
+        boolean canReach = canReach(mv);
+        if (canReach && inCheck(_turn)) {
+            return removesCheck(mv);
+        }
+        return canReach;
+    }
+
+    /**
+     * Checks if a piece can reach a particular square.
+     *
+     * @param mv Move to check.
+     * @return TRUE iff the piece at MV.getFrom() can
+     * reach MV.getTo();
+     */
+    boolean canReach(Move mv) {
+        if (mv == null) {
+            return false;
+        }
         return switch (get(mv.getFrom()).abbr()) {
             case Bishop.ABBR -> isPossibleBishop(mv);
             case King.ABBR -> isPossibleKing(mv);
@@ -316,8 +368,6 @@ public class Board {
             default -> false;
         };
     }
-
-    //TODO Implement better check and checkmate conditions
 
     /**
      * TRUE iff MV is a possible castle move.
@@ -333,7 +383,7 @@ public class Board {
         Piece king = pieces.get(0);
         Piece rook = pieces.get(1);
 
-        if (!(king.abbr() == King.ABBR && rook.abbr() == Rook.ABBR)
+        if (rook == null || !(king.abbr() == King.ABBR && rook.abbr() == Rook.ABBR)
                 || (king.hasMoved() || rook.hasMoved())) {
             return false;
         }
@@ -396,7 +446,7 @@ public class Board {
      * @return Whether a king can make the move.
      */
     boolean isPossibleKing(Move mv) {
-        return mv.distance() == 1 && !inCheck(mv.getTo(), get(mv.getFrom()).getColor())
+        return mv.distance() == 1
                 && (get(mv.getTo()) == null || get(mv.getTo()).getColor() != get(mv.getFrom()).getColor());
     }
 
@@ -422,18 +472,59 @@ public class Board {
     boolean isPossiblePawn(Move mv) {
         Color color = get(mv.getFrom()).getColor();
         return switch (color) {
-            case WHITE -> mv.getTo().row() > mv.getFrom().row()
+            case WHITE ->
+
+                    // Moving forward
+                    mv.getTo().row() > mv.getFrom().row()
+
+                            /*
+                             * Destination square validity checks.
+                             */
+
+                            // Moving directly upwards into an empty space
                             && ((mv.direction() == 0 && get(mv.getTo()) == null)
-                                || ((mv.direction() == 1 || mv.direction() == 7) && get(mv.getTo()) != null
-                                    && get(mv.getTo()).getColor() != get(mv.getFrom()).getColor()))
+
+                                //Moving diagonally upwards into a space occupied by opposite color (Black)
+                                || ((mv.direction() == 1 || mv.direction() == 7)
+                                    && get(mv.getTo()) != null
+                                    && get(mv.getTo()).getColor()
+                                        != get(mv.getFrom()).getColor()))
+
+                            /*
+                             * Distance validity checks.
+                             */
+
+                            // Moving by exactly one square
                             && (mv.distance() == 1
+
+                                // Moving by 2 squares on first move
                                 || (!get(mv.getFrom()).hasMoved()
                                     && mv.direction() == 0 && mv.distance() == 2));
-            case BLACK -> mv.getTo().row() < mv.getFrom().row()
+
+            case BLACK ->
+
+                    // Moving forward
+                    mv.getTo().row() < mv.getFrom().row()
+
+                            /*
+                             * Destination square validity checks.
+                             */
+
+                            // Moving directly upwards into an empty space
                             && ((mv.direction() == 4 && get(mv.getTo()) == null)
+
+                                //Moving diagonally upwards into a space occupied by opposite color (Black)
                                 || ((mv.direction() == 3 || mv.direction() == 5) && get(mv.getTo()) != null
                                     && get(mv.getTo()).getColor() != get(mv.getFrom()).getColor()))
+
+                            /*
+                             * Distance validity checks.
+                             */
+
+                            // Moving by exactly one square
                             && (mv.distance() == 1
+
+                                // Moving by 2 squares on first move
                                 || (!get(mv.getFrom()).hasMoved()
                                     && mv.direction() == 4 && mv.distance() == 2));
         };
@@ -477,7 +568,8 @@ public class Board {
      */
     boolean inCheck(Square sq, Color color) {
         for (Piece piece : getPieces(color.opposite())) {
-            if (isPossible(mv(piece.getLocation(), sq))) {
+            if (get(piece.getLocation()) == piece
+                    && canReach(mv(piece.getLocation(), sq))) {
                 return true;
             }
         }
@@ -491,11 +583,49 @@ public class Board {
      * @return Whether the specified side is in check.
      */
     boolean inCheck(Color color) {
+        if (getKingSquare(color) == null) {
+            return false;
+        }
         return switch (color) {
             case WHITE -> inCheck(getKingSquare(WHITE), color);
             case BLACK -> inCheck(getKingSquare(BLACK), color);
             default -> throw new IllegalStateException("Piece color must be WHITE or BLACK.");
         };
+    }
+
+    /**
+     * Checks if a given move removes the
+     * moving color from check. Assumes that
+     * the moving color is in check.
+     *
+     * @param mv Move to check.
+     * @return TRUE iff MV removes the moving
+     * color from check.
+     */
+    boolean removesCheck(Move mv) {
+        Piece movingPiece = get(mv.getFrom());
+        Piece destPiece = get(mv.getTo());
+        Color color = movingPiece.getColor();
+
+        setUntracked(mv.getFrom(), null);
+        setUntracked(mv.getTo(), movingPiece);
+
+        boolean inCheck = inCheck(color);
+
+        setUntracked(mv.getTo(), destPiece);
+        setUntracked(mv.getFrom(), movingPiece);
+
+        return !inCheck;
+    }
+
+    /**
+     * Checks if a checkmate has been achieved.
+     *
+     * @return TRUE iff the moving color has no
+     * possible moves.
+     */
+    boolean checkmate() {
+        return possibleMoves(_turn).isEmpty();
     }
 
     /**
@@ -607,7 +737,7 @@ public class Board {
      */
     HashSet<Move> bishopPossibleMoves(Piece bishop) {
         HashSet<Move> moves = new HashSet<>();
-        ArrayList<Square> squares = new ArrayList<>();
+        ArrayList<Square> squares = new ArrayList<>(4);
         squares.add(bishop.getLocation().moveDest(1, 1));
         squares.add(bishop.getLocation().moveDest(3, 1));
         squares.add(bishop.getLocation().moveDest(5, 1));
@@ -618,8 +748,10 @@ public class Board {
                     if (isPossible(mv(bishop.getLocation(), squares.get(i)))) {
                         moves.add(mv(bishop.getLocation(), squares.get(i)));
                         squares.set(i, squares.get(i).moveDest(2 * i + 1, 1));
-                    } else {
+                    } else if (get(squares.get(i)) != null) {
                         squares.set(i, null);
+                    } else {
+                        squares.set(i, squares.get(i).moveDest(2 * i + 1, 1));
                     }
                 }
             }
@@ -735,7 +867,7 @@ public class Board {
      */
     HashSet<Move> rookPossibleMoves(Piece rook) {
         HashSet<Move> moves = new HashSet<>();
-        ArrayList<Square> squares = new ArrayList<>();
+        ArrayList<Square> squares = new ArrayList<>(4);
         squares.add(rook.getLocation().moveDest(0, 1));
         squares.add(rook.getLocation().moveDest(2, 1));
         squares.add(rook.getLocation().moveDest(4, 1));
@@ -746,8 +878,10 @@ public class Board {
                     if (isPossible(mv(rook.getLocation(), squares.get(i)))) {
                         moves.add(mv(rook.getLocation(), squares.get(i)));
                         squares.set(i, squares.get(i).moveDest(2 * i, 1));
-                    } else {
+                    } else if (get(squares.get(i)) != null) {
                         squares.set(i, null);
+                    } else {
+                        squares.set(i, squares.get(i).moveDest(2 * i, 1));
                     }
                 }
             }
@@ -850,9 +984,19 @@ public class Board {
      */
     Piece removePiece(Piece piece) {
         switch (piece.getColor()) {
-            case WHITE -> _whitePieces.remove(piece);
-            case BLACK -> _blackPieces.remove(piece);
-            default -> throw new IllegalStateException("Piece color must be WHITE or BLACK.");
+            case WHITE:
+                _whitePieces.remove(piece);
+                if (piece.abbr() == King.ABBR) {
+                    updateKingSquare(null, WHITE);
+                }
+                break;
+            case BLACK:
+                _blackPieces.remove(piece);
+                if (piece.abbr() == King.ABBR) {
+                    updateKingSquare(null, BLACK);
+                }
+                break;
+            default: throw new IllegalStateException("Piece color must be WHITE or BLACK.");
         }
         return piece;
     }

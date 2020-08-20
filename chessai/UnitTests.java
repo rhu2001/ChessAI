@@ -315,6 +315,8 @@ public class UnitTests {
         assertEquals(b.get(sq(1, 0)).getColor(), BLACK);
 
         System.out.println(b);
+        System.out.println(b.getKingSquare(WHITE));
+        System.out.println(b.getKingSquare(BLACK));
 
         b.makeMove(mv("b7-b8"), 'R');
         b.makeMove(mv("a8-b8"));
@@ -420,10 +422,6 @@ public class UnitTests {
         assertFalse(b.possibleMovesUpdated(WHITE));
         assertFalse(b.possibleMovesUpdated(BLACK));
 
-        System.out.println(b);
-        System.out.println(b.getPieces(WHITE));
-        System.out.println(b.getPieces(BLACK));
-
         /*
          * All possible white Pawn moves.
          */
@@ -514,7 +512,72 @@ public class UnitTests {
         System.out.println(b.getPieces(WHITE));
         System.out.println(b.getPieces(BLACK));
 
-        System.out.println(b.possibleMoves(BLACK));
+        System.out.println("Black possible moves: " + b.possibleMoves(BLACK));
         assertTrue(b.possibleMoves(BLACK).isEmpty());
+        // TODO this test is failing for some reason
+
+        b.initialize(new String[][]{
+                {"wq"}
+        }, WHITE);
+    }
+
+    @Test
+    public void checkMateTests() {
+        Board b = new Board();
+
+        assertFalse(b.checkmate());
+        b.makeMove(mv("d2-d4"));
+        assertFalse(b.checkmate());
+
+        b.initialize(new String[][] {
+                {"wk", null, null, "br"},
+                {null, null, "br"},
+                {},
+                {},
+                {},
+                {},
+                {},
+                {}
+        }, WHITE);
+        assertTrue(b.checkmate());
+
+        b.set(sq(3, 7), new Queen(WHITE, sq(3, 7)));
+        assertFalse(b.checkmate());
+
+        b.initialize(new String[][] {
+                {"bk"},
+                {null, "wq"},
+                {"wb"},
+                {},
+                {},
+                {},
+                {},
+                {}
+        }, BLACK);
+        assertTrue(b.checkmate());
+
+        b.initialize(new String[][] {
+                {"wk"},
+                {null, "bq"},
+                {"bp"},
+                {},
+                {},
+                {},
+                {},
+                {}
+        }, WHITE);
+        assertTrue(b.checkmate());
+
+        b.initialize(new String[][] {
+                {},
+                {},
+                {},
+                {},
+                {},
+                {null, null, null, null, "wk"},
+                {null, null, null, "wp", "wp"},
+                {null, null, null, null, "bk"},
+        }, BLACK);
+        assertTrue(b.checkmate());
     }
 }
