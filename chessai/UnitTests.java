@@ -495,6 +495,8 @@ public class UnitTests {
         assertFalse(b.possibleMovesUpdated(WHITE));
         assertFalse(b.possibleMovesUpdated(BLACK));
 
+        System.out.println("STupid bugyy test");
+
         b.initialize(new String[][] {
                 {"bk"},
                 {null, null, null, "wn"},
@@ -504,21 +506,10 @@ public class UnitTests {
                 {},
                 {},
                 {null, null, null, null, null, null, null, "wb"}
-        }, WHITE);
+        }, BLACK);
         assertFalse(b.possibleMovesUpdated(WHITE));
         assertFalse(b.possibleMovesUpdated(BLACK));
-
-        System.out.println(b);
-        System.out.println(b.getPieces(WHITE));
-        System.out.println(b.getPieces(BLACK));
-
-        System.out.println("Black possible moves: " + b.possibleMoves(BLACK));
         assertTrue(b.possibleMoves(BLACK).isEmpty());
-        // TODO this test is failing for some reason
-
-        b.initialize(new String[][]{
-                {"wq"}
-        }, WHITE);
     }
 
     @Test
@@ -578,6 +569,66 @@ public class UnitTests {
                 {null, null, null, "wp", "wp"},
                 {null, null, null, null, "bk"},
         }, BLACK);
+        assertTrue(b.checkmate());
+
+        b.initialize(new String[][] {
+                {null, "wk", null, null, null, null, null, "br"},
+                {"wp", "wp", "wp"},
+                {},
+                {},
+                {},
+                {},
+                {},
+                {},
+        }, WHITE);
+        assertTrue(b.checkmate());
+
+        b.initialize(new String[][] {
+                {null, null, null, null, null, "br"},
+                {null, null, null, null, "wn", "bp", "bp", "bk"},
+                {},
+                {},
+                {},
+                {null, null, null, null, null, null, null, "wr"},
+                {},
+                {},
+        }, BLACK);
+        assertTrue(b.checkmate());
+
+        b.initialize(new String[][] {
+                {},
+                {"bb", "bb"},
+                {},
+                {},
+                {},
+                {},
+                {null, null, null, null, null, null, null, "wp"},
+                {null, null, null, null, null, null, null, "wk"},
+        }, WHITE);
+        assertTrue(b.checkmate());
+
+        b.initialize(new String[][] {
+                {null, null, null, null, null, "br", "bk"},
+                {null, null, null, null, null, "bp", "wq", "bp"},
+                {null, null, null, null, null, null, null, "wb"},
+                {},
+                {},
+                {},
+                {},
+                {},
+        }, BLACK);
+        assertTrue(b.checkmate());
+
+        b.initialize(new String[][] {
+                {},
+                {},
+                {},
+                {},
+                {},
+                {null, "bk"},
+                {},
+                {"wk", null, null, null, null, "bq"},
+        }, WHITE);
         assertTrue(b.checkmate());
     }
 }
