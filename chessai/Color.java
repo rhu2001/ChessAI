@@ -43,10 +43,10 @@ public enum Color {
      *
      * @return Abbreviated name of this color.
      */
-    String abbr() {
+    char abbr() {
         return switch (this) {
-            case WHITE -> "W";
-            case BLACK -> "B";
+            case WHITE -> 'W';
+            case BLACK -> 'B';
             default -> throw new RuntimeException("Unreachable statement");
         };
     }

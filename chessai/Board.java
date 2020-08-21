@@ -21,17 +21,17 @@ public class Board {
      * The total number of possible rows or
      * columns.
      */
-    static final int BOARD_SIZE = 8;
+    public static final int BOARD_SIZE = 8;
 
     /**
      * The total number of possible squares.
      */
-    static final int NUM_SQUARES = BOARD_SIZE * BOARD_SIZE;
+    public static final int NUM_SQUARES = BOARD_SIZE * BOARD_SIZE;
 
     /**
      * Default starting configuration of a chess board.
      */
-    static final String[][] DEFAULT_LAYOUT = {
+    public static final String[][] DEFAULT_LAYOUT = {
             {"wr", "wn", "wb", "wq", "wk", "wb", "wn", "wr"},
             {"wp", "wp", "wp", "wp", "wp", "wp", "wp", "wp"},
             {},
@@ -41,6 +41,14 @@ public class Board {
             {"bp", "bp", "bp", "bp", "bp", "bp", "bp", "bp"},
             {"br", "bn", "bb", "bq", "bk", "bb", "bn", "br"}
     };
+
+    /**
+     * Characters representing the outcome of a board.
+     */
+    public static final char WHITE_WINS = 'W',
+            BLACK_WINS = 'B',
+            DRAW = 'D',
+            GAME_ONGOING = '\5';
 
     /**
      * Converts a character to a Color.
@@ -116,6 +124,11 @@ public class Board {
         _possibleWhiteMovesUpdated = false;
         _possibleBlackMovesUpdated = false;
 
+        _whiteInCheckUpdated = false;
+        _blackInCheckUpdated = false;
+
+        _outcomeKnown = false;
+
         if (layout != null) {
             for (int r = 0; r < layout.length; r++) {
                 for (int c = 0; c < layout.length; c++) {
@@ -171,6 +184,11 @@ public class Board {
         _possibleWhiteMovesUpdated = false;
         _possibleBlackMovesUpdated = false;
 
+        _whiteInCheckUpdated = false;
+        _blackInCheckUpdated = false;
+
+        _outcomeKnown = false;
+
         if (get(sq) != null) {
             removePiece(get(sq));
         }
@@ -209,6 +227,14 @@ public class Board {
      * @param next The color of the next turn.
      */
     void setUntracked(Square sq, Piece piece, Color next) {
+        _possibleWhiteMovesUpdated = false;
+        _possibleBlackMovesUpdated = false;
+
+        _whiteInCheckUpdated = false;
+        _blackInCheckUpdated = false;
+
+        _outcomeKnown = false;
+
         _board[sq.index()] = piece;
 
         if (piece != null && piece.abbr() == King.ABBR) {
@@ -274,7 +300,7 @@ public class Board {
             set(rook.getLocation(), rook);
         } else if (get(mv.getFrom()).abbr() == Pawn.ABBR && mv.isPossiblePromotion()) {
             set(mv.getFrom(), null);
-            set(mv.getTo(), generatePiece(promotion, _turn, mv.getTo()));
+            set(mv.getTo(), generatePiece(promotion, turn(), mv.getTo()));
         } else {
             Piece moving = get(mv.getFrom());
 
@@ -284,7 +310,7 @@ public class Board {
             set(mv.getTo(), moving);
         }
 
-        _turn = _turn.opposite();
+        _turn = turn().opposite();
     }
 
     /**
@@ -300,8 +326,8 @@ public class Board {
         Move mv = _movesMade.get(_movesMade.size() - 1).mv();
         char moving = _movesMade.remove(_movesMade.size() - 1).moving();
 
-        set(mv.getTo(), generatePiece(mv.getCaptured(), _turn, mv.getTo()));
-        set(mv.getFrom(), generatePiece(moving, _turn.opposite(), mv.getFrom()), _turn.opposite());
+        set(mv.getTo(), generatePiece(mv.getCaptured(), turn(), mv.getTo()));
+        set(mv.getFrom(), generatePiece(moving, turn().opposite(), mv.getFrom()), turn().opposite());
 
         return true;
     }
@@ -316,7 +342,7 @@ public class Board {
      * move is the same as _turn.
      */
     boolean isLegal(Move mv) {
-        return isPossible(mv) && get(mv.getFrom()).getColor() == _turn;
+        return isPossible(mv) && get(mv.getFrom()).getColor() == turn();
     }
 
     /**
@@ -341,7 +367,7 @@ public class Board {
         }
 
         boolean canReach = canReach(mv);
-        if (canReach && inCheck(_turn)) {
+        if (canReach && inCheck(turn())) {
             return removesCheck(mv);
         }
         return canReach;
@@ -586,11 +612,23 @@ public class Board {
         if (getKingSquare(color) == null) {
             return false;
         }
-        return switch (color) {
-            case WHITE -> inCheck(getKingSquare(WHITE), color);
-            case BLACK -> inCheck(getKingSquare(BLACK), color);
+        switch (color) {
+            case WHITE -> {
+                if (!_whiteInCheckUpdated) {
+                    _whiteInCheck = inCheck(getKingSquare(WHITE), WHITE);
+                    _whiteInCheckUpdated = true;
+                }
+                return _whiteInCheck;
+            }
+            case BLACK -> {
+                if (!_blackInCheckUpdated) {
+                    _blackInCheck = inCheck(getKingSquare(BLACK), BLACK);
+                    _blackInCheckUpdated = true;
+                }
+                return _blackInCheck;
+            }
             default -> throw new IllegalStateException("Piece color must be WHITE or BLACK.");
-        };
+        }
     }
 
     /**
@@ -625,7 +663,75 @@ public class Board {
      * possible moves.
      */
     boolean checkmate() {
-        return possibleMoves(_turn).isEmpty();
+        return inCheck(turn()) && possibleMoves(turn()).isEmpty();
+    }
+
+    /**
+     * Finds the outcome of the current board, storing
+     * the result in _outcome.
+     *
+     * @return _outcome.
+     */
+    char outcome() {
+        if (!_outcomeKnown) {
+            if (checkmate()) {
+                _outcome = turn().opposite().abbr();
+            } else if (!inCheck(turn()) && possibleMoves(turn()).isEmpty()) {
+                _outcome = GAME_ONGOING;
+            } else if (getPieces(WHITE).size() < 4 && getPieces(BLACK).size() < 4) {
+                boolean whiteDead = false,
+                        blackDead = false;
+                switch (getPieces(WHITE).size()) {
+                    case 1 -> whiteDead = getPieces(WHITE).contains(get(getKingSquare(WHITE)));
+                    case 2, 3 -> {
+                        int k = 0,
+                                b = 0,
+                                n = 0;
+                        for (Piece piece : getPieces(WHITE)) {
+                            switch (piece.abbr()) {
+                                case King.ABBR -> k++;
+                                case Bishop.ABBR -> b++;
+                                case Knight.ABBR -> n++;
+                            }
+                        }
+                        whiteDead = k == 1 && ((b == 1 && n == 0)
+                                || (b == 0 && n == 1)
+                                || (b == 0 && n == 2));
+                    }
+                    default -> throw new IllegalStateException(getPieces(WHITE).size() + " white pieces being tracked.");
+
+                }
+                switch (getPieces(BLACK).size()) {
+                    case 1 -> blackDead = getPieces(BLACK).contains(get(getKingSquare(BLACK)));
+                    case 2, 3 -> {
+                        int k = 0,
+                            b = 0,
+                            n = 0;
+                        for (Piece piece : getPieces(BLACK)) {
+                            switch (piece.abbr()) {
+                                case King.ABBR -> k++;
+                                case Bishop.ABBR -> b++;
+                                case Knight.ABBR -> n++;
+                            }
+                        }
+                        blackDead = k == 1 && ((b == 1 && n == 0)
+                                || (b == 0 && n == 1)
+                                || (b == 0 && n == 2));
+                    }
+                    default -> throw new IllegalStateException(getPieces(BLACK).size() + " black pieces being tracked.");
+
+                }
+                if (whiteDead && blackDead) {
+                    _outcome = DRAW;
+                } else {
+                    _outcome = GAME_ONGOING;
+                }
+            } else {
+                _outcome = GAME_ONGOING;
+            }
+            _outcomeKnown = true;
+        }
+        return _outcome;
     }
 
     /**
@@ -1029,6 +1135,15 @@ public class Board {
         };
     }
 
+    /**
+     * The current moving color.
+     *
+     * @return _turn.
+     */
+    Color turn() {
+        return _turn;
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -1045,7 +1160,7 @@ public class Board {
             sb.append("\n");
         }
         sb.append("    ").append("  ").append("a b c d e f g h\n");
-        sb.append("Next move: ").append(_turn.fullName()).append("\n===\n");
+        sb.append("Next move: ").append(turn().fullName()).append("\n===\n");
         return sb.toString();
     }
 
@@ -1072,6 +1187,29 @@ public class Board {
      */
     boolean _possibleWhiteMovesUpdated = false,
             _possibleBlackMovesUpdated = false;
+
+    /**
+     * TRUE iff the corresponding color is in check.
+     */
+    boolean _whiteInCheck = false,
+            _blackInCheck = false;
+
+    /**
+     * TRUE iff the corresponding color's check status
+     * is up-to-date.
+     */
+    boolean _whiteInCheckUpdated = false,
+            _blackInCheckUpdated = false;
+
+    /**
+     * The outcome of this game.
+     */
+    char _outcome = GAME_ONGOING;
+
+    /**
+     * TRUE iff _outcome is up-to-date.
+     */
+    boolean _outcomeKnown = false;
 
     /**
      * Locations of the kings.

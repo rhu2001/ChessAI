@@ -533,6 +533,7 @@ public class UnitTests {
         assertTrue(b.checkmate());
 
         b.set(sq(3, 7), new Queen(WHITE, sq(3, 7)));
+        System.out.println(b);
         assertFalse(b.checkmate());
 
         b.initialize(new String[][] {
